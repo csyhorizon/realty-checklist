@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, deleteProperty, setAnswer, updateProperty } from '../db/db';
+import { db, deleteProperty, recentAgencies, setAnswer, updateProperty } from '../db/db';
+import { displayName } from '../lib/format';
 import { SECTIONS, clausesFor, itemsFor, type SectionId } from '../schema/checklist';
 import { scoreProperty, sectionProgress } from '../lib/score';
 import { useSettings } from '../lib/hooks';
@@ -21,11 +22,34 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'summary', label: '🏆 종합' },
 ];
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="py-3 border-b border-slate-100 last:border-0">
       <p className="font-semibold text-slate-800 mb-2">{label}</p>
       {children}
+    </div>
+  );
+}
+
+function AgencySuggestions({ p }: { p: Property }) {
+  const list = useLiveQuery(() => recentAgencies(6), []) ?? [];
+  const others = list.filter((a) => a.name !== (p.agencyName ?? '').trim() || a.phone !== (p.agencyPhone ?? '').trim());
+  if (others.length === 0) return null;
+  return (
+    <div className="pt-1 pb-3">
+      <p className="text-xs text-slate-500 mb-2">최근 중개소 불러오기</p>
+      <div className="flex gap-2 overflow-x-auto no-scrollbar">
+        {others.map((a) => (
+          <button
+            key={`${a.name}|${a.phone}`}
+            onClick={() => updateProperty(p.id, { agencyName: a.name, agencyPhone: a.phone })}
+            className="shrink-0 text-left px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 active:bg-slate-100"
+          >
+            <span className="block text-sm font-semibold">{a.name || '이름 없음'}</span>
+            <span className="block text-xs text-slate-500">{a.phone || '번호 없음'}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -39,7 +63,11 @@ function BasicTab({ p }: { p: Property }) {
       </Card>
       <Card>
         <Field label="매물 별칭">
-          <TextField value={p.nickname} onChange={(v) => updateProperty(p.id, { nickname: v || '이름 없는 매물' })} />
+          <TextField
+            value={p.nickname}
+            placeholder={p.address?.trim() || '예) 역삼동 투룸 3층 (비우면 주소로 표시)'}
+            onChange={(v) => updateProperty(p.id, { nickname: v })}
+          />
         </Field>
         <Field label="거래유형">
           <Segment
@@ -48,9 +76,10 @@ function BasicTab({ p }: { p: Property }) {
             onChange={(v) => v && updateProperty(p.id, { dealType: v as DealType })}
           />
         </Field>
-        <Field label="주소">
-          <TextField value={p.address} placeholder="도로명/지번 주소 또는 건물명" onChange={(v) => updateProperty(p.id, { address: v })} />
-        </Field>
+      </Card>
+      <Card>
+        <h3 className="font-bold mb-1">🏢 중개소 · 일정</h3>
+        <AgencySuggestions p={p} />
         <Field label="중개사무소">
           <TextField value={p.agencyName} placeholder="○○공인중개사" onChange={(v) => updateProperty(p.id, { agencyName: v })} />
         </Field>
@@ -169,7 +198,7 @@ function SummaryTab({ p, baseRate }: { p: Property; baseRate: number }) {
       </Card>
       <button
         onClick={async () => {
-          if (!confirm(`"${p.nickname}" 매물과 사진을 모두 삭제할까요?`)) return;
+          if (!confirm(`"${displayName(p)}" 매물과 사진을 모두 삭제할까요?`)) return;
           await deleteProperty(p.id);
           nav('/', { replace: true });
         }}
@@ -223,7 +252,7 @@ export default function DetailPage() {
         title={
           <span className="flex items-center gap-2">
             <DealBadge deal={p.dealType} />
-            <span className="truncate">{p.nickname}</span>
+            <span className="truncate">{displayName(p)}</span>
           </span>
         }
         right={

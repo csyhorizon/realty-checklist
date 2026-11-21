@@ -9,6 +9,11 @@ export function formatManwon(v: number | null | undefined): string {
   return `${man.toLocaleString()}만`;
 }
 
+/** 별칭이 비어 있으면 주소 → 날짜 순으로 표시용 이름 생성 (저장값은 건드리지 않음) */
+export function displayName(p: { nickname: string; address?: string; createdAt: number }): string {
+  return p.nickname.trim() || p.address?.trim() || `이름 없는 매물 (${formatDate(p.createdAt)})`;
+}
+
 export const formatDate = (ts: number) =>
   new Date(ts).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
 

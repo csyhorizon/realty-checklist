@@ -30,6 +30,35 @@ export function getCurrentLocation(): Promise<GeoPoint> {
 
 const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+/**
+ * 좌표 → 주소 (OpenStreetMap Nominatim, API 키 불필요)
+ * 예) "서울 강남구 테헤란로 123 (역삼동)"
+ */
+export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=ko`;
+  const ctrl = new AbortController();
+  const t = window.setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    if (!res.ok) return null;
+    const j = await res.json();
+    const a: Record<string, string> = j.address ?? {};
+    const region = [a.province ?? a.state, a.city, a.county, a.borough ?? a.city_district, a.town ?? a.village]
+      .filter(Boolean)
+      .filter((x, i, arr) => arr.indexOf(x) === i);
+    const dong = a.quarter ?? a.suburb ?? a.neighbourhood;
+    const street = a.road ? [a.road, a.house_number].filter(Boolean).join(' ') : dong;
+    const parts = [...region, street].filter(Boolean).join(' ');
+    const extra = [a.road && dong, j.name && j.name !== a.road ? j.name : null].filter(Boolean).join(', ');
+    const text = parts ? (extra ? `${parts} (${extra})` : parts) : (j.display_name as string | undefined);
+    return text?.trim() || null;
+  } catch {
+    return null;
+  } finally {
+    window.clearTimeout(t);
+  }
+}
+
 export const naverWebUrl = (lat: number, lng: number) =>
   `https://map.naver.com/p?c=${lng},${lat},17,0,0,0,dh`;
 

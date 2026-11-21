@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createProperty } from '../db/db';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { createProperty, recentAgencies } from '../db/db';
 import { TopBar } from '../components/ui';
 import type { DealType } from '../types';
 
@@ -15,11 +16,16 @@ export default function NewPage() {
   const [deal, setDeal] = useState<DealType | null>(null);
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
+  const last = useLiveQuery(async () => (await recentAgencies(1))[0] ?? null, []);
+  const [useLast, setUseLast] = useState<boolean | null>(null);
+  // 기본값: 마지막 중개소 등록이 12시간 이내면 켜두기 (같은 날 여러 집 도는 경우)
+  const reuse = useLast ?? (!!last && Date.now() - last.at < 12 * 3600 * 1000);
 
   const create = async () => {
     if (!deal) return;
     setBusy(true);
-    const id = await createProperty(deal, name);
+    const extra = reuse && last ? { agencyName: last.name, agencyPhone: last.phone } : {};
+    const id = await createProperty(deal, name, extra);
     nav(`/p/${id}`, { replace: true });
   };
 
@@ -49,6 +55,26 @@ export default function NewPage() {
             ))}
           </div>
         </div>
+
+        {last && (
+          <button
+            type="button"
+            onClick={() => setUseLast(!reuse)}
+            className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 text-left transition ${
+              reuse ? 'border-blue-600 bg-blue-50' : 'border-slate-200 bg-white'
+            }`}
+          >
+            <span className={`w-6 h-6 shrink-0 rounded-md border-2 flex items-center justify-center text-white text-sm ${reuse ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
+              {reuse ? '✓' : ''}
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block font-semibold">직전 중개소 그대로 쓰기</span>
+              <span className="block text-sm text-slate-500 truncate">
+                {last.name || '이름 없음'} · {last.phone || '번호 없음'}
+              </span>
+            </span>
+          </button>
+        )}
 
         <div>
           <label className="block font-semibold mb-2">매물 별칭 (선택)</label>

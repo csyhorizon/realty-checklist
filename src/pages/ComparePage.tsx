@@ -5,7 +5,7 @@ import { db } from '../db/db';
 import { ITEMS, SECTIONS, itemsFor, type Item } from '../schema/checklist';
 import { costScores, scoreProperty, type ScoreResult } from '../lib/score';
 import { useSettings } from '../lib/hooks';
-import { formatManwon } from '../lib/format';
+import { displayName, formatManwon } from '../lib/format';
 import { BottomNav, DealBadge, ScoreBadge, TopBar } from '../components/ui';
 import { CoverImage } from '../components/PhotoBox';
 import { openNaverMap } from '../lib/geo';
@@ -115,7 +115,7 @@ function Picker() {
             <CoverImage photoId={p.coverPhotoId} className="w-12 h-12 rounded-lg shrink-0" />
             <span className="flex-1 min-w-0">
               <DealBadge deal={p.dealType} />
-              <span className="block font-semibold truncate mt-0.5">{p.nickname}</span>
+              <span className="block font-semibold truncate mt-0.5">{displayName(p)}</span>
             </span>
             <span className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-sm ${on ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300'}`}>
               {on ? sel.indexOf(p.id) + 1 : ''}
@@ -192,10 +192,10 @@ export default function ComparePage() {
                       <DealBadge deal={p.dealType} />
                       <ScoreBadge score={s.total} size="sm" />
                     </div>
-                    <p className="font-bold text-left truncate mt-1">{p.nickname}</p>
+                    <p className="font-bold text-left truncate mt-1">{displayName(p)}</p>
                   </Link>
                   {p.location && (
-                    <button onClick={() => openNaverMap(p.location!.lat, p.location!.lng, p.nickname)} className="mt-1 w-full text-xs py-1.5 rounded-lg bg-emerald-50 text-emerald-700">
+                    <button onClick={() => openNaverMap(p.location!.lat, p.location!.lng, displayName(p))} className="mt-1 w-full text-xs py-1.5 rounded-lg bg-emerald-50 text-emerald-700">
                       📍 지도
                     </button>
                   )}

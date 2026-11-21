@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, updateProperty } from '../db/db';
 import { scoreProperty } from '../lib/score';
 import { useSettings } from '../lib/hooks';
-import { formatDate, priceSummary, formatManwon } from '../lib/format';
+import { displayName, formatDate, priceSummary, formatManwon } from '../lib/format';
 import { BottomNav, DealBadge, ScoreBadge, TopBar } from '../components/ui';
 import { CoverImage } from '../components/PhotoBox';
 import { STATUS_LABEL, type DealType, type Status } from '../types';
@@ -110,7 +110,7 @@ export default function ListPage() {
                       {p.status !== 'reviewing' && <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{STATUS_LABEL[p.status as Status]}</span>}
                       {p.location && <span className="text-xs">📍</span>}
                     </div>
-                    <p className="font-bold truncate mt-1">{p.nickname}</p>
+                    <p className="font-bold truncate mt-1">{displayName(p)}</p>
                     <p className="text-sm text-slate-600 truncate">{priceSummary(p.dealType, p.answers.deposit, p.answers.rent)}</p>
                     <p className="text-xs text-slate-400 mt-0.5">
                       {formatDate(p.createdAt)}

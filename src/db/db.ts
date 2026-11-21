@@ -32,13 +32,18 @@ export async function saveSettings(patch: Partial<Settings>) {
   await db.settings.put({ ...cur, ...patch, id: 'app' });
 }
 
-export async function createProperty(dealType: DealType, nickname: string): Promise<string> {
+export async function createProperty(
+  dealType: DealType,
+  nickname: string,
+  extra: Partial<Pick<Property, 'agencyName' | 'agencyPhone'>> = {},
+): Promise<string> {
   const now = Date.now();
   const id = uid();
   await db.properties.add({
     id,
     dealType,
-    nickname: nickname.trim() || `매물 ${new Date(now).toLocaleDateString('ko-KR')}`,
+    nickname: nickname.trim(),
+    ...extra,
     answers: {},
     memo: '',
     status: 'reviewing',
@@ -56,6 +61,24 @@ export async function updateProperty(id: string, patch: Partial<Property>) {
 
 export async function setAnswer(p: Property, key: string, value: Property['answers'][string]) {
   await updateProperty(p.id, { answers: { ...p.answers, [key]: value } });
+}
+
+/** 최근 매물들의 중개소 정보 (중복 제거, 최신순) */
+export async function recentAgencies(limit = 5): Promise<{ name: string; phone: string; at: number }[]> {
+  const list = await db.properties.orderBy('createdAt').reverse().limit(50).toArray();
+  const seen = new Set<string>();
+  const out: { name: string; phone: string; at: number }[] = [];
+  for (const p of list) {
+    const name = p.agencyName?.trim() ?? '';
+    const phone = p.agencyPhone?.trim() ?? '';
+    if (!name && !phone) continue;
+    const key = `${name}|${phone}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ name, phone, at: p.createdAt });
+    if (out.length >= limit) break;
+  }
+  return out;
 }
 
 export async function deleteProperty(id: string) {
