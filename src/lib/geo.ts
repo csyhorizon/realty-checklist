@@ -1,0 +1,59 @@
+import type { GeoPoint } from '../types';
+
+export function getCurrentLocation(): Promise<GeoPoint> {
+  return new Promise((resolve, reject) => {
+    if (!('geolocation' in navigator)) {
+      reject(new Error('이 브라우저는 위치 기능을 지원하지 않습니다.'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) =>
+        resolve({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          savedAt: Date.now(),
+        }),
+      (err) => {
+        const msg =
+          err.code === err.PERMISSION_DENIED
+            ? '위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해 주세요.'
+            : err.code === err.TIMEOUT
+              ? '위치를 가져오는 데 시간이 너무 오래 걸립니다. 다시 시도해 주세요.'
+              : '위치를 가져올 수 없습니다.';
+        reject(new Error(msg));
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+    );
+  });
+}
+
+const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+export const naverWebUrl = (lat: number, lng: number) =>
+  `https://map.naver.com/p?c=${lng},${lat},17,0,0,0,dh`;
+
+export const naverAppUrl = (lat: number, lng: number, name: string) =>
+  `nmap://place?lat=${lat}&lng=${lng}&name=${encodeURIComponent(name)}&appname=${encodeURIComponent(location.origin)}`;
+
+export const naverSearchUrl = (query: string) =>
+  `https://map.naver.com/p/search/${encodeURIComponent(query)}`;
+
+/** 모바일: 네이버지도 앱(마커 표시) 실행 → 앱이 없으면 웹 지도로 이동. PC: 웹 지도 새 탭 */
+export function openNaverMap(lat: number, lng: number, name: string) {
+  const web = naverWebUrl(lat, lng);
+  if (!isMobile()) {
+    window.open(web, '_blank', 'noopener');
+    return;
+  }
+  let left = false;
+  const onHide = () => {
+    if (document.visibilityState === 'hidden') left = true;
+  };
+  document.addEventListener('visibilitychange', onHide);
+  window.location.href = naverAppUrl(lat, lng, name);
+  window.setTimeout(() => {
+    document.removeEventListener('visibilitychange', onHide);
+    if (!left) window.location.href = web;
+  }, 1500);
+}
