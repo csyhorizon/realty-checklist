@@ -26,7 +26,10 @@ function answerText(item: Item, v: AnswerValue): string {
   if (v == null || v === '' || (Array.isArray(v) && v.length === 0)) return '–';
   if (item.type === 'number') return item.unit === '만원' ? formatManwon(v as number) : `${v}${item.unit ?? ''}`;
   if (item.type === 'single') return item.options?.find((o) => o.v === v)?.l ?? String(v);
-  if (item.type === 'multi') return (v as string[]).map((x) => item.options?.find((o) => o.v === x)?.l ?? x).join(', ');
+  if (item.type === 'multi') {
+    const arr = Array.isArray(v) ? v : [String(v)];
+    return arr.map((x) => item.options?.find((o) => o.v === x)?.l ?? x).join(', ');
+  }
   return String(v);
 }
 

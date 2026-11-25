@@ -17,6 +17,8 @@ export interface Item {
   label: string;
   type: 'single' | 'multi' | 'number' | 'text';
   options?: Opt[];
+  /** multi 항목에서 다른 선택지와 함께 고를 수 없는 단독 값 (예: 'none') */
+  exclusive?: string;
   unit?: string;
   tip?: string;
   placeholder?: string;
@@ -181,11 +183,20 @@ export const ITEMS: Item[] = [
     options: [{ v: 'good', l: '쾌적함', s: 1 }, { v: 'bad', l: '습기 있음', s: 0.2 }],
   },
   {
-    id: 'mold', section: 'room', label: '곰팡이', type: 'single', tip: '발견 시 사진 찍어두기',
+    id: 'mold', section: 'room', label: '곰팡이', type: 'multi', exclusive: 'none',
+    tip: '벽면·창틀 중복 선택 가능. 발견 시 사진 찍어두기',
     options: [
       { v: 'none', l: '없음', s: 1 }, { v: 'wall', l: '벽면', s: 0, risk: 'warn' },
       { v: 'window', l: '창틀', s: 0.3, risk: 'warn' },
     ],
+    scoreFn: (v) => {
+      const arr = Array.isArray(v) ? v : typeof v === 'string' && v ? [v] : [];
+      if (arr.length === 0) return null;
+      if (arr.includes('none')) return 1;
+      if (arr.includes('wall')) return 0;
+      if (arr.includes('window')) return 0.3;
+      return null;
+    },
   },
   { id: 'storage', section: 'room', label: '수납장', type: 'single', options: cond3('청결', '보통', '교체 필요') },
   { id: 'floorState', section: 'room', label: '바닥', type: 'single', options: cond3('청결', '보통', '교체 필요') },
@@ -232,12 +243,18 @@ export const ITEMS: Item[] = [
 ];
 
 export const CONTRACT_CLAUSES: { id: string; text: string; deals?: DealType[] }[] = [
+  // 전세·반전세
   { id: 'c1', text: '전세자금대출(HUG 버팀목) 및 보증보험 가입에 동의·협조한다.', deals: ['jeonse', 'semi'] },
-  { id: 'c1m', text: '임차인의 보증보험 가입에 동의·협조한다.', deals: ['monthly'] },
-  { id: 'c2', text: '임대인은 미납 국세·지방세 열람에 동의하며, 체납이 없음을 확인한다.' },
+  { id: 'c2', text: '임대인은 미납 국세·지방세 열람에 동의하며, 체납이 없음을 확인한다.', deals: ['jeonse', 'semi'] },
   { id: 'c3', text: '버팀목 대출이 불가할 경우 가계약금을 전액 환불한다.', deals: ['jeonse', 'semi'] },
-  { id: 'c4', text: '잔금일 익일까지 선순위 권리를 제한한다. (추가 근저당 등 설정 금지)' },
-  { id: 'c5', text: '임대차 계약 체결 후 등기부등본 변동 시 임차인은 계약을 해제할 수 있다.' },
+  { id: 'c4', text: '잔금일 익일까지 선순위 권리를 제한한다. (추가 근저당 등 설정 금지)', deals: ['jeonse', 'semi'] },
+  { id: 'c5', text: '임대차 계약 체결 후 등기부등본 변동 시 임차인은 계약을 해제할 수 있다.', deals: ['jeonse', 'semi'] },
+  // 월세
+  { id: 'm1', text: '입주 전 확인된 하자(누수·곰팡이·파손 등)는 입주 전까지 임대인이 수리하며, 통상 사용에 의한 자연 마모는 원상복구에서 제외한다.', deals: ['monthly'] },
+  { id: 'm2', text: '임차인의 고의·과실이 아닌 주요 설비(보일러·배관·누수) 및 기본 옵션 가전의 고장은 임대인이 수리한다.', deals: ['monthly'] },
+  { id: 'm3', text: '월 관리비 내역(포함·별도 항목)을 명시하고, 공과금·관리비는 입주일 기준으로 정산한다.', deals: ['monthly'] },
+  { id: 'm4', text: '입주 전 권리 변동(압류·추가 근저당 등) 발생 시 계약을 해제하고 계약금(가계약금)을 전액 반환한다.', deals: ['monthly'] },
+  { id: 'm5', text: '전입신고 및 확정일자 부여에 협조하며, 계약 종료 시 보증금은 퇴실과 동시에 반환한다.', deals: ['monthly'] },
 ];
 
 export const itemsFor = (deal: DealType, section?: SectionId) =>

@@ -88,6 +88,13 @@ export function scoreProperty(p: Property, baseRate: number): ScoreResult {
     if (item.type === 'single' && item.options) {
       const o = item.options.find((x) => x.v === v);
       if (o?.risk) flags.push({ level: o.risk, text: `${item.label}: ${o.l}` });
+    } else if (item.type === 'multi' && item.options) {
+      const vals = Array.isArray(v) ? v : typeof v === 'string' && v ? [v] : [];
+      const risky = item.options.filter((x) => vals.includes(x.v) && x.risk);
+      if (risky.length > 0) {
+        const level: Risk = risky.some((x) => x.risk === 'danger') ? 'danger' : 'warn';
+        flags.push({ level, text: `${item.label}: ${risky.map((x) => x.l).join(', ')}` });
+      }
     }
   }
 

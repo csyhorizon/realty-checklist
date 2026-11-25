@@ -177,7 +177,11 @@ function ContractTab({ p }: { p: Property }) {
           <Icon name={missing ? 'dangerous' : 'check_circle'} size={20} />
           <span>{missing ? `미확인 특약 ${missing}개` : '모든 특약 확인 완료'}</span>
         </p>
-        <p className="text-sm mt-1">최소한의 전세사기 방지 특약입니다. 넣을 수 없다면 계약하지 마세요.</p>
+        <p className="text-sm mt-1">
+          {p.dealType === 'monthly'
+            ? '월세 계약 시 분쟁을 예방하기 위한 기본 특약입니다. 계약 전 중개사와 꼭 확인하세요.'
+            : '최소한의 전세사기 방지 특약입니다. 넣을 수 없다면 계약하지 마세요.'}
+        </p>
       </div>
       <Card>
         {clauses.map((c) => {
@@ -276,8 +280,9 @@ export default function DetailPage() {
     if (t === 'photos') return photoCount ? String(photoCount) : '';
     if (t === 'contract') {
       const c = clausesFor(p.dealType);
-      const ch = Array.isArray(p.answers.contract) ? p.answers.contract.length : 0;
-      return `${Math.min(ch, c.length)}/${c.length}`;
+      const checkedIds = Array.isArray(p.answers.contract) ? (p.answers.contract as string[]) : [];
+      const ch = c.filter((x) => checkedIds.includes(x.id)).length;
+      return `${ch}/${c.length}`;
     }
     return '';
   };

@@ -32,20 +32,40 @@ export function Segment({ options, value, onChange }: { options: Opt[]; value: A
   );
 }
 
-export function Chips({ options, value, onChange }: { options: Opt[]; value: AnswerValue; onChange: (v: string[]) => void }) {
-  const arr = Array.isArray(value) ? value : [];
+export function Chips({
+  options,
+  value,
+  onChange,
+  exclusive,
+}: {
+  options: Opt[];
+  value: AnswerValue;
+  onChange: (v: string[]) => void;
+  exclusive?: string;
+}) {
+  const arr = Array.isArray(value) ? value : typeof value === 'string' && value ? [value] : [];
+  const toggle = (v: string, on: boolean) => {
+    if (on) return onChange(arr.filter((x) => x !== v));
+    if (exclusive && v === exclusive) return onChange([v]);
+    return onChange([...arr.filter((x) => x !== exclusive), v]);
+  };
   return (
     <div className="flex flex-wrap gap-2">
       {options.map((o) => {
         const on = arr.includes(o.v);
+        const cls = on
+          ? o.risk === 'danger'
+            ? 'bg-rose-50 border-rose-500 text-rose-700 font-semibold'
+            : o.risk === 'warn'
+              ? 'bg-amber-50 border-amber-500 text-amber-800 font-semibold'
+              : 'bg-blue-50 border-blue-500 text-blue-700 font-semibold'
+          : 'bg-white border-slate-200 text-slate-700';
         return (
           <button
             key={o.v}
             type="button"
-            onClick={() => onChange(on ? arr.filter((x) => x !== o.v) : [...arr, o.v])}
-            className={`min-h-11 px-4 rounded-full border text-[15px] inline-flex items-center gap-1 transition ${
-              on ? 'bg-blue-50 border-blue-500 text-blue-700 font-semibold' : 'bg-white border-slate-200 text-slate-700'
-            }`}
+            onClick={() => toggle(o.v, on)}
+            className={`min-h-11 px-4 rounded-full border text-[15px] inline-flex items-center gap-1 transition ${cls}`}
           >
             {on && <Icon name="check" size={16} />}
             {o.l}
@@ -126,7 +146,7 @@ export function ItemField({ item, value, onChange, action }: { item: Item; value
         </p>
       )}
       {item.type === 'single' && <Segment options={item.options!} value={value} onChange={onChange} />}
-      {item.type === 'multi' && <Chips options={item.options!} value={value} onChange={onChange} />}
+      {item.type === 'multi' && <Chips options={item.options!} value={value} exclusive={item.exclusive} onChange={onChange} />}
       {item.type === 'number' && <NumberField value={value} unit={item.unit} onChange={onChange} />}
       {item.type === 'text' && <TextField value={(value as string) ?? ''} placeholder={item.placeholder} onChange={onChange} />}
     </div>
