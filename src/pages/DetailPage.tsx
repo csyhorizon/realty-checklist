@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, deleteProperty, recentAgencies, setAnswer, updateProperty } from '../db/db';
 import { displayName } from '../lib/format';
 import { SECTIONS, clausesFor, itemsFor, type SectionId } from '../schema/checklist';
-import { scoreProperty, sectionProgress } from '../lib/score';
+import { effectiveRate, scoreProperty, sectionProgress } from '../lib/score';
 import { useSettings } from '../lib/hooks';
 import { Card, DealBadge, ItemField, ScoreBadge, Segment, TextField, TopBar } from '../components/ui';
 import { LocationBox } from '../components/LocationBox';
@@ -15,7 +15,7 @@ import { StationFinder } from '../components/StationFinder';
 import { BankReportModal } from '../components/BankReportModal';
 import { Icon, type IconName } from '../components/Icon';
 import { naverLandUrl } from '../lib/geo';
-import { DEAL_LABEL, STATUS_LABEL, type DealType, type Property, type Status } from '../types';
+import { DEAL_LABEL, STATUS_LABEL, type DealType, type Property, type Settings, type Status } from '../types';
 
 type Tab = 'basic' | SectionId | 'contract' | 'photos' | 'summary';
 
@@ -133,6 +133,17 @@ function SectionTab({ p, section }: { p: Property; section: SectionId }) {
       <span>네이버 부동산</span>
     </a>
   );
+  const officialAction = (
+    <a
+      href="https://www.realtyprice.kr/"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 px-2.5 h-8 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold active:bg-slate-200 shrink-0"
+    >
+      <Icon name="open_in_new" size={14} />
+      <span>공시가격알리미</span>
+    </a>
+  );
   return (
     <Card>
       {items.map((item) => (
@@ -142,7 +153,7 @@ function SectionTab({ p, section }: { p: Property; section: SectionId }) {
             item={item}
             value={p.answers[item.id]}
             onChange={(v) => setAnswer(p, item.id, v)}
-            action={item.id === 'marketPrice' ? marketAction : undefined}
+            action={item.id === 'marketPrice' ? marketAction : item.id === 'officialPrice' ? officialAction : undefined}
           />
         </Fragment>
       ))}
@@ -209,14 +220,15 @@ function ContractTab({ p }: { p: Property }) {
   );
 }
 
-function SummaryTab({ p, baseRate }: { p: Property; baseRate: number }) {
+function SummaryTab({ p, settings }: { p: Property; settings: Settings }) {
   const nav = useNavigate();
-  const s = scoreProperty(p, baseRate);
+  const rate = effectiveRate(settings);
+  const s = scoreProperty(p, rate);
   const [reportOpen, setReportOpen] = useState(false);
   return (
     <div className="space-y-4">
       <Card>
-        <ScoreCard s={s} deal={p.dealType} baseRate={baseRate} />
+        <ScoreCard s={s} deal={p.dealType} settings={settings} />
       </Card>
       <button
         type="button"
@@ -226,7 +238,7 @@ function SummaryTab({ p, baseRate }: { p: Property; baseRate: number }) {
         <Icon name="account_balance" size={20} />
         <span>은행 제출용 PNG 출력 (자금비율 설정)</span>
       </button>
-      {reportOpen && <BankReportModal p={p} baseRate={baseRate} onClose={() => setReportOpen(false)} />}
+      {reportOpen && <BankReportModal p={p} ratePct={rate} onClose={() => setReportOpen(false)} />}
       <Card>
         <Field label="내 별점">
           <div className="flex gap-1">
@@ -279,7 +291,7 @@ export default function DetailPage() {
   if (p === undefined) return null;
   if (p === null || !p) return <div className="p-8 text-center">매물을 찾을 수 없어요.</div>;
 
-  const s = scoreProperty(p, settings.baseRate);
+  const s = scoreProperty(p, effectiveRate(settings));
   const idx = TABS.findIndex((t) => t.id === tab);
   const go = (t: Tab) => setParams({ tab: t }, { replace: true });
 
@@ -351,7 +363,7 @@ export default function DetailPage() {
             <PhotoBox p={p} />
           </Card>
         )}
-        {tab === 'summary' && <SummaryTab p={p} baseRate={settings.baseRate} />}
+        {tab === 'summary' && <SummaryTab p={p} settings={settings} />}
       </main>
 
       <div className="fixed bottom-0 inset-x-0 z-20 bg-white border-t border-slate-200 pb-[env(safe-area-inset-bottom)]">

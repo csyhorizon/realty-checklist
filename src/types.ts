@@ -41,6 +41,8 @@ export interface Photo {
 export interface Settings {
   id: 'app';
   baseRate: number; // 한국은행 기준금리 (%)
+  rateMode?: 'legal' | 'loan'; // 환산 기준: 법정 전환율 vs 내 대출금리
+  loanRate?: number; // 내 예상 대출금리 (%)
   lastBackupAt?: number;
 }
 

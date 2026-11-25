@@ -18,7 +18,7 @@ class AppDB extends Dexie {
 
 export const db = new AppDB();
 
-export const DEFAULT_SETTINGS: Settings = { id: 'app', baseRate: 3.0 };
+export const DEFAULT_SETTINGS: Settings = { id: 'app', baseRate: 3.0, rateMode: 'legal', loanRate: 2.5 };
 
 export const uid = () =>
   (crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`);

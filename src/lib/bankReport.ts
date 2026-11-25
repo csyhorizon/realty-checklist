@@ -138,7 +138,7 @@ function drawOuterBox(ctx: CanvasRenderingContext2D, x: number, y: number, w: nu
 }
 
 /** 은행 대출 상담·제출용 1페이지 흑백 공문서 양식 PNG 생성 */
-export async function renderBankReportPng(p: Property, baseRate: number, opts: BankReportOptions): Promise<Blob> {
+export async function renderBankReportPng(p: Property, ratePct: number, opts: BankReportOptions): Promise<Blob> {
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
@@ -148,7 +148,7 @@ export async function renderBankReportPng(p: Property, baseRate: number, opts: B
   ctx.fillRect(0, 0, W, H);
 
   const a = p.answers;
-  const score = scoreProperty(p, baseRate);
+  const score = scoreProperty(p, ratePct);
   const deposit = Math.max(0, opts.depositManwon);
   const selfAmount = Math.min(deposit, Math.max(0, Math.round(opts.selfAmountManwon)));
   const loanAmount = Math.max(0, deposit - selfAmount);
@@ -189,7 +189,12 @@ export async function renderBankReportPng(p: Property, baseRate: number, opts: B
   const t1Start = y;
   const floorStr =
     a.floor != null || a.totalFloors != null ? `${a.floor ?? '?'}층 / 총 ${a.totalFloors ?? '?'}층` : '-';
-  const houseStr = `${optLabel('houseType', a.houseType)}${a.area != null ? ` · ${a.area}평` : ''}`;
+  const typeParts = [
+    a.buildingType ? optLabel('buildingType', a.buildingType) : null,
+    a.houseType ? optLabel('houseType', a.houseType) : null,
+    a.area != null ? `${a.area}평` : null,
+  ].filter(Boolean);
+  const houseStr = typeParts.length ? typeParts.join(' · ') : '-';
   const stationStr =
     a.stationMin != null
       ? `${a.stationName ? `${a.stationName} ` : ''}${a.stationBy === 'bus' ? '버스' : '도보'} 약 ${a.stationMin}분`
@@ -255,12 +260,22 @@ export async function renderBankReportPng(p: Property, baseRate: number, opts: B
   y += hdrH + valH;
 
   const market = typeof a.marketPrice === 'number' ? a.marketPrice : null;
+  const official = typeof a.officialPrice === 'number' ? a.officialPrice : null;
+  const hug126 = official && official > 0 ? official * 1.26 : null;
   const lien = a.lien === 'yes' && typeof a.lienAmount === 'number' ? a.lienAmount : 0;
   const jr = market && deposit > 0 ? (deposit / market) * 100 : null;
   const dr = market && deposit > 0 ? ((deposit + lien) / market) * 100 : null;
   const hugOk = market && deposit > 0 ? deposit + lien <= market * 0.9 : null;
+  const hug126Ok = hug126 != null && deposit > 0 ? deposit + lien <= hug126 : null;
+  const priceLabel = hug126 != null ? '시세 / 공시126%' : '참고 매매시세';
+  const priceVal =
+    hug126 != null
+      ? `${market ? `${formatManwon(market)}원` : '-'} / 한도 ${formatManwon(hug126)}원 (${hug126Ok == null ? '-' : hug126Ok ? '이내' : '초과'})`
+      : market
+        ? `${formatManwon(market)}원`
+        : '-';
   y = drawFormRow(ctx, y, [
-    { label: '참고 매매시세', value: market ? `${formatManwon(market)}원` : '-' },
+    { label: priceLabel, value: priceVal, bold: hug126Ok === false },
     {
       label: '전세가율 / 부채비율',
       value:
@@ -294,6 +309,11 @@ export async function renderBankReportPng(p: Property, baseRate: number, opts: B
       value: a.lien === 'yes' ? `있음 (${a.lienAmount != null ? `${formatManwon(a.lienAmount as number)}원` : '금액 미입력'})` : optLabel('lien', a.lien),
       bold: a.lien === 'yes',
     },
+    {
+      label: '전입신고 여부',
+      value: optLabel('residentReg', a.residentReg),
+      bold: a.residentReg === 'no',
+    },
   ]);
   drawOuterBox(ctx, PAD, t3Start, CW, y - t3Start);
 
@@ -308,7 +328,7 @@ export async function renderBankReportPng(p: Property, baseRate: number, opts: B
     const note = (a[`note_${sec.id}`] as string | undefined)?.trim();
     if (note) memoParts.push(`· ${sec.label}: ${note}`);
   }
-  const bankFlags = score.flags.filter((f) => !/^(채광|곰팡이|수압|보일러\/온수):/.test(f.text));
+  const bankFlags = score.flags.filter((f) => !/^(채광|곰팡이|수압|보일러\/온수|난방 방식):/.test(f.text));
   if (bankFlags.length > 0) {
     memoParts.push(`· 주의 확인사항: ${bankFlags.map((f) => f.text).join(' / ')}`);
   }

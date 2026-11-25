@@ -80,6 +80,10 @@ export const ITEMS: Item[] = [
     tip: '네이버 부동산·실거래가 참고 (현위치 저장 시 해당 위치로 바로 열림). 입력하면 전세가율/부채비율 자동 계산',
   },
   {
+    id: 'officialPrice', section: 'safety', label: '공시가격 (기준시가)', type: 'number', unit: '만원', deals: ['jeonse', 'semi'],
+    tip: '빌라·오피스텔 등 시세가 없을 때 입력. HUG 보증보험 한도(공시가 × 126%) 자동 판정',
+  },
+  {
     id: 'loan', section: 'safety', label: '버팀목 대출', type: 'single', deals: ['jeonse', 'semi'],
     options: [{ v: 'yes', l: '가능', s: 1 }, { v: 'no', l: '불가', s: 0, risk: 'warn' }, { v: 'unk', l: '모름' }],
   },
@@ -91,6 +95,11 @@ export const ITEMS: Item[] = [
     id: 'violation', section: 'safety', label: '위반건축물 여부', type: 'single',
     tip: '건축물대장 확인. 위반건축물·근생은 대출 불가',
     options: [{ v: 'ok', l: '정상(주택)', s: 1 }, { v: 'bad', l: '위반·근생', s: 0, risk: 'danger' }],
+  },
+  {
+    id: 'residentReg', section: 'safety', label: '전입신고 가능 여부', type: 'single',
+    tip: '전입신고 불가(업무용 오피스텔 등) 시 대항력 확보 및 버팀목·보증보험 가입이 불가능합니다.',
+    options: [{ v: 'yes', l: '가능', s: 1 }, { v: 'no', l: '불가(업무용 등)', s: 0, risk: 'danger' }],
   },
   {
     id: 'landlord', section: 'safety', label: '임대인 유형', type: 'single',
@@ -115,7 +124,17 @@ export const ITEMS: Item[] = [
   { id: 'floor', section: 'location', label: '해당 층', type: 'number', unit: '층' },
   { id: 'totalFloors', section: 'location', label: '건물 총 층수', type: 'number', unit: '층' },
   {
-    id: 'houseType', section: 'location', label: '집 유형', type: 'single',
+    id: 'buildingType', section: 'location', label: '건물 유형', type: 'single',
+    tip: '다가구는 타 호실 선순위 보증금 합계 확인 필수, 오피스텔은 전입신고 가능 여부 확인',
+    options: [
+      { v: 'apt', l: '아파트', s: 1 },
+      { v: 'officetel', l: '오피스텔', s: 0.85 },
+      { v: 'villa', l: '빌라·다세대', s: 0.7 },
+      { v: 'multi', l: '원룸·다가구', s: 0.6 },
+    ],
+  },
+  {
+    id: 'houseType', section: 'location', label: '층 형태', type: 'single',
     options: [
       { v: 'semiBase', l: '반지하', s: 0.1, risk: 'warn' }, { v: 'ground', l: '지상층', s: 1 },
       { v: 'rooftop', l: '옥탑방', s: 0.3 }, { v: 'duplex', l: '복층', s: 0.8 },
@@ -208,6 +227,17 @@ export const ITEMS: Item[] = [
   {
     id: 'hood', section: 'room', label: '후드', type: 'single',
     options: [{ v: 'new', l: '최신', s: 1 }, { v: 'old', l: '구형', s: 0.5 }, { v: 'none', l: '없음', s: 0 }],
+  },
+  {
+    id: 'heating', section: 'room', label: '난방 방식', type: 'single',
+    tip: '전기난방·LPG는 겨울철 난방비 부담이 클 수 있습니다.',
+    options: [
+      { v: 'gas', l: '도시가스(개별)', s: 1 },
+      { v: 'district', l: '지역난방', s: 1 },
+      { v: 'central', l: '중앙난방', s: 0.65 },
+      { v: 'electric', l: '전기·심야', s: 0.3, risk: 'warn' },
+      { v: 'lpg', l: 'LPG·기타', s: 0.2, risk: 'warn' },
+    ],
   },
 
   // ───────── 4. 화장실 ─────────

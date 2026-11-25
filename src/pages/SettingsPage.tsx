@@ -3,8 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, saveSettings } from '../db/db';
 import { useSettings } from '../lib/hooks';
 import { downloadOrShareBackup, importBackup } from '../lib/backup';
-import { conversionRate } from '../lib/score';
-import { BottomNav, Card, NumberField, TopBar } from '../components/ui';
+import { conversionRate, effectiveRate } from '../lib/score';
+import { BottomNav, Card, NumberField, Segment, TopBar } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { SECTIONS, WEIGHTS } from '../schema/checklist';
 import { DEAL_LABEL, type DealType } from '../types';
@@ -106,15 +106,37 @@ export default function SettingsPage() {
         <Card>
           <h3 className="font-bold mb-1 flex items-center gap-1.5">
             <Icon name="trending_up" size={20} className="text-blue-600" />
-            <span>기준금리</span>
+            <span>전월세 환산 기준</span>
           </h3>
           <p className="text-sm text-slate-500 mb-3">
-            월세·반전세·전세의 한 달 체감 주거비를 같은 기준으로 비교하기 위해, 주택임대차보호법상{' '}
-            <b>법정 전월세 전환율(한국은행 기준금리 + 2%p)</b>을 적용해 보증금을 월세로 환산합니다.
+            월세·반전세·전세의 한 달 체감 주거비를 비교할 때 보증금을 월세로 환산하는 이율입니다.
           </p>
-          <NumberField value={settings.baseRate} unit="%" onChange={(v) => v != null && saveSettings({ baseRate: v })} />
+          <div className="mb-3">
+            <Segment
+              options={[
+                { v: 'legal', l: '법정 전환율 (기준금리+2%p)' },
+                { v: 'loan', l: '내 예상 대출금리' },
+              ]}
+              value={settings.rateMode ?? 'legal'}
+              onChange={(v) => v && saveSettings({ rateMode: v as 'legal' | 'loan' })}
+            />
+          </div>
+          {settings.rateMode === 'loan' ? (
+            <>
+              <p className="text-xs text-slate-500 mb-2">버팀목 대출 등 내가 실제 적용받는 금리를 입력하세요.</p>
+              <NumberField value={settings.loanRate ?? 2.5} unit="%" onChange={(v) => v != null && saveSettings({ loanRate: v })} />
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-slate-500 mb-2">한국은행 기준금리 (주택임대차보호법 시행령 제9조 기준)</p>
+              <NumberField value={settings.baseRate} unit="%" onChange={(v) => v != null && saveSettings({ baseRate: v })} />
+            </>
+          )}
           <p className="text-sm mt-2">
-            현재 전환율: <b>{conversionRate(settings.baseRate).toFixed(2)}%</b>
+            현재 적용 환산율: <b>{effectiveRate(settings).toFixed(2)}%</b>
+            {settings.rateMode !== 'loan' && (
+              <span className="text-slate-500 text-xs ml-1.5">(기준금리 {settings.baseRate}% + 2%p = {conversionRate(settings.baseRate).toFixed(2)}%)</span>
+            )}
           </p>
         </Card>
 
@@ -127,7 +149,8 @@ export default function SettingsPage() {
             <li>각 항목 선택지에 0~1점 부여 → 섹션 평균 × 100</li>
             <li>종합 = 섹션 점수의 가중 평균 (입력한 섹션만 반영)</li>
             <li>전세가율·부채비율(전세·반전세): ≤70% 안전 · 70~80% 양호 · 80~90% 유의(HUG 한도 이내) · 90% 초과 위험</li>
-            <li>위반건축물 또는 전세가율·부채비율 90% 초과 시 최대 40점</li>
+            <li>공시가격 입력 시 HUG 기준(공시가 × 126%) 초과 여부 자동 판정</li>
+            <li>위반건축물·전입신고 불가 또는 전세가율/부채비율 90% 초과 시 최대 40점</li>
           </ul>
           <table className="w-full mt-3 text-sm text-center">
             <thead>

@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db';
 import { ITEMS, SECTIONS, itemsFor, type Item } from '../schema/checklist';
-import { costScores, scoreProperty, type ScoreResult } from '../lib/score';
+import { costScores, effectiveRate, scoreProperty, type ScoreResult } from '../lib/score';
 import { useSettings } from '../lib/hooks';
 import { displayName, formatManwon } from '../lib/format';
 import { BottomNav, DealBadge, ScoreBadge, TopBar } from '../components/ui';
@@ -128,6 +128,20 @@ function buildRows(list: { p: Property; s: ScoreResult }[], cost: (number | null
   rows.push(plainRow('jr', '비용·안전', '전세가율', jr.map(pct), jr.map((v) => (v == null ? null : -v)), 'calculate'));
   const dr = list.map(({ s }) => s.metrics.debtRatio);
   rows.push(plainRow('dr', '비용·안전', '부채비율', dr.map(pct), dr.map((v) => (v == null ? null : -v)), 'calculate'));
+  rows.push(
+    plainRow(
+      'hug126',
+      '비용·안전',
+      '공시가 126%',
+      list.map(({ s }) =>
+        s.metrics.hug126Limit == null
+          ? '–'
+          : `${formatManwon(s.metrics.hug126Limit)} (${s.metrics.hug126Ok === false ? '초과' : '이내'})`,
+      ),
+      list.map(({ s }) => (s.metrics.hug126Ok == null ? null : s.metrics.hug126Ok ? 1 : 0)),
+      'calculate',
+    ),
+  );
 
   const lowerBetter = new Set(['deposit', 'rent', 'fee', 'lienAmount']);
   const higherBetter = new Set(['area']);
@@ -211,11 +225,12 @@ export default function ComparePage() {
   );
   const [diffOnly, setDiffOnly] = useState(false);
 
+  const rate = effectiveRate(settings);
   const data = useMemo(() => {
-    const list = (props ?? []).filter((p): p is Property => !!p).map((p) => ({ p, s: scoreProperty(p, settings.baseRate) }));
+    const list = (props ?? []).filter((p): p is Property => !!p).map((p) => ({ p, s: scoreProperty(p, rate) }));
     const cost = costScores(list.map(({ s }) => s.metrics.monthlyEquiv));
     return { list, rows: buildRows(list, cost) };
-  }, [props, settings.baseRate]);
+  }, [props, rate]);
 
   if (ids.length < 2) {
     return (

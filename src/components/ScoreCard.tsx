@@ -1,16 +1,16 @@
-import { SECTIONS } from '../schema/checklist';
-import { conversionRate, type ScoreResult } from '../lib/score';
+import { SECTIONS, WEIGHTS } from '../schema/checklist';
+import { conversionRate, effectiveRate, type ScoreResult } from '../lib/score';
 import { formatManwon } from '../lib/format';
 import { ScoreBadge } from './ui';
-import { WEIGHTS } from '../schema/checklist';
-import type { DealType } from '../types';
+import type { DealType, Settings } from '../types';
 import { Icon } from './Icon';
 
 const ratioTone = (r: number | null, warn: number, danger: number) =>
   r == null ? 'text-slate-400' : r > danger ? 'text-rose-600' : r > warn ? 'text-amber-600' : 'text-emerald-600';
 
-export function ScoreCard({ s, deal, baseRate }: { s: ScoreResult; deal: DealType; baseRate: number }) {
+export function ScoreCard({ s, deal, settings }: { s: ScoreResult; deal: DealType; settings: Settings }) {
   const m = s.metrics;
+  const rate = effectiveRate(settings);
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -65,9 +65,20 @@ export function ScoreCard({ s, deal, baseRate }: { s: ScoreResult; deal: DealTyp
           <p className={`font-bold ${ratioTone(m.debtRatio, 80, 90)}`}>{m.debtRatio == null ? '–' : `${m.debtRatio.toFixed(0)}%`}</p>
         </div>
       </div>
+      {m.hug126Limit != null && (
+        <div className={`rounded-xl px-3 py-2 text-xs flex items-center justify-between ${m.hug126Ok === false ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`}>
+          <span>HUG 공시가 126% 한도</span>
+          <span className="font-bold">
+            {formatManwon(m.hug126Limit)} ({m.hug126Ok === false ? '초과' : '이내'})
+          </span>
+        </div>
+      )}
       <p className="text-[11px] text-slate-400 leading-relaxed">
-        환산월세 = 월세 + 관리비 + 보증금 × 전환율 {conversionRate(baseRate).toFixed(2)}% ÷ 12 (기준금리 {baseRate}% + 2%p). 전세가율·부채비율은 매매
-        시세 입력 시 계산됩니다.
+        환산월세 = 월세 + 관리비 + 보증금 × {rate.toFixed(2)}% ÷ 12 (
+        {settings.rateMode === 'loan'
+          ? `내 예상 대출금리 ${rate.toFixed(2)}%`
+          : `법정 전환율: 기준금리 ${settings.baseRate}% + 2%p = ${conversionRate(settings.baseRate).toFixed(2)}%`}
+        ). 전세가율·부채비율은 매매 시세 입력 시 계산됩니다.
       </p>
 
       {s.flags.length > 0 && (

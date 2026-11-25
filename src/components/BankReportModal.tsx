@@ -8,11 +8,11 @@ const PRESETS = [10, 20, 30, 40, 50];
 
 export function BankReportModal({
   p,
-  baseRate,
+  ratePct,
   onClose,
 }: {
   p: Property;
-  baseRate: number;
+  ratePct: number;
   onClose: () => void;
 }) {
   const initDeposit = typeof p.answers.deposit === 'number' ? p.answers.deposit : 0;
@@ -42,7 +42,7 @@ export function BankReportModal({
     const t = window.setTimeout(async () => {
       setBusy(true);
       try {
-        const b = await renderBankReportPng(p, baseRate, {
+        const b = await renderBankReportPng(p, ratePct, {
           depositManwon: deposit,
           selfAmountManwon: clampedSelf,
           loanProduct,
@@ -61,7 +61,7 @@ export function BankReportModal({
       window.clearTimeout(t);
       if (createdUrl) URL.revokeObjectURL(createdUrl);
     };
-  }, [p, baseRate, deposit, clampedSelf, loanProduct, extraMemo]);
+  }, [p, ratePct, deposit, clampedSelf, loanProduct, extraMemo]);
 
   const filename = `${displayName(p).replace(/[\\/:*?"<>|]/g, '_')}-대출검토-${new Date().toISOString().slice(0, 10)}.png`;
 

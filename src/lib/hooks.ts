@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db/db';
+import { db, DEFAULT_SETTINGS } from '../db/db';
 
 export function useSettings() {
-  return useLiveQuery(() => db.settings.get('app'), []) ?? { id: 'app' as const, baseRate: 3.0 };
+  return useLiveQuery(() => db.settings.get('app'), []) ?? DEFAULT_SETTINGS;
 }
 
 /** Blob → object URL (언마운트 시 해제) */

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, updateProperty } from '../db/db';
-import { scoreProperty } from '../lib/score';
+import { effectiveRate, scoreProperty } from '../lib/score';
 import { useSettings } from '../lib/hooks';
 import { displayName, formatDate, priceSummary, formatManwon } from '../lib/format';
 import { BottomNav, DealBadge, ScoreBadge, TopBar } from '../components/ui';
@@ -22,12 +22,13 @@ export default function ListPage() {
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
 
+  const rate = effectiveRate(settings);
   const rows = useMemo(() => {
     if (!props) return [];
     const list = props
       .filter((p) => deal === 'all' || p.dealType === deal)
       .filter((p) => !hideRejected || p.status !== 'rejected')
-      .map((p) => ({ p, s: scoreProperty(p, settings.baseRate) }));
+      .map((p) => ({ p, s: scoreProperty(p, rate) }));
     list.sort((a, b) => {
       if (a.p.favorite !== b.p.favorite) return a.p.favorite ? -1 : 1;
       if (sort === 'score') return (b.s.total ?? -1) - (a.s.total ?? -1);
@@ -35,7 +36,7 @@ export default function ListPage() {
       return b.p.createdAt - a.p.createdAt;
     });
     return list;
-  }, [props, sort, deal, hideRejected, settings.baseRate]);
+  }, [props, sort, deal, hideRejected, rate]);
 
   const toggle = (id: string) =>
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : s.length >= 4 ? s : [...s, id]));
