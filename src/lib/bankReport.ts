@@ -18,12 +18,12 @@ const FONT = `'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif
 
 function optLabel(itemId: string, v: AnswerValue): string {
   const item = ITEM_MAP[itemId];
-  if (!item || v == null || v === '') return '-';
+  if (!item || v == null || v === '') return '미확인';
   if (item.type === 'number') return item.unit === '만원' ? formatManwon(v as number) : `${v}${item.unit ?? ''}`;
   if (item.type === 'single') return item.options?.find((o) => o.v === v)?.l ?? String(v);
   if (item.type === 'multi') {
     const arr = Array.isArray(v) ? v : [String(v)];
-    if (!arr.length) return '-';
+    if (!arr.length) return '미확인';
     return arr.map((x) => item.options?.find((o) => o.v === x)?.l ?? x).join(', ');
   }
   return String(v);
@@ -48,25 +48,43 @@ function drawText(
 function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxW: number, font: string, maxLines: number): string[] {
   ctx.font = font;
   const out: string[] = [];
-  for (const para of text.split(/\r?\n/)) {
-    if (!para.trim()) continue;
+  let truncated = false;
+  const paras = text.split(/\r?\n/).filter((p) => p.trim().length > 0);
+
+  for (let pi = 0; pi < paras.length; pi++) {
+    const para = paras[pi];
     let cur = '';
-    for (const ch of para) {
+    for (let ci = 0; ci < para.length; ci++) {
+      const ch = para[ci];
       const next = cur + ch;
       if (ctx.measureText(next).width > maxW && cur) {
         out.push(cur);
         cur = ch;
-        if (out.length >= maxLines) break;
+        if (out.length >= maxLines) {
+          truncated = true;
+          break;
+        }
       } else {
         cur = next;
       }
     }
-    if (out.length < maxLines && cur) out.push(cur);
-    if (out.length >= maxLines) break;
+    if (truncated) break;
+    if (cur) {
+      if (out.length >= maxLines) {
+        truncated = true;
+        break;
+      }
+      out.push(cur);
+      if (out.length >= maxLines && pi < paras.length - 1) {
+        truncated = true;
+        break;
+      }
+    }
   }
-  if (out.length === maxLines) {
-    const last = out[maxLines - 1];
-    if (last.length > 1) out[maxLines - 1] = `${last.slice(0, -1)}…`;
+
+  if (truncated && out.length > 0) {
+    const last = out[out.length - 1];
+    if (last.length > 1) out[out.length - 1] = `${last.slice(0, -1)}…`;
   }
   return out;
 }
@@ -304,16 +322,21 @@ export async function renderBankReportPng(p: Property, baseRate: number, opts: B
   const checkedClauses = Array.isArray(a.contract) ? (a.contract as string[]) : [];
   const t5Start = y;
   const cHdrH = 34;
-  const cRowH = 34;
+  const clauseFont = `400 15.5px ${FONT}`;
+  const clauseRows = clauses.map((c) => {
+    const lines = wrapLines(ctx, c.text, CW - 114, clauseFont, 2);
+    return { on: checkedClauses.includes(c.id), lines, h: lines.length > 1 ? 50 : 34 };
+  });
+  const cBodyH = clauseRows.reduce((sum, r) => sum + r.h, 0);
 
   ctx.strokeStyle = '#222222';
   ctx.lineWidth = 1;
   ctx.fillStyle = '#f2f2f2';
   ctx.fillRect(PAD, y, CW, cHdrH);
-  ctx.strokeRect(PAD, y, CW, cHdrH + clauses.length * cRowH);
+  ctx.strokeRect(PAD, y, CW, cHdrH + cBodyH);
   ctx.beginPath();
   ctx.moveTo(PAD + 84, y);
-  ctx.lineTo(PAD + 84, y + cHdrH + clauses.length * cRowH);
+  ctx.lineTo(PAD + 84, y + cHdrH + cBodyH);
   ctx.moveTo(PAD, y + cHdrH);
   ctx.lineTo(W - PAD, y + cHdrH);
   ctx.stroke();
@@ -322,21 +345,19 @@ export async function renderBankReportPng(p: Property, baseRate: number, opts: B
   drawText(ctx, '특약 항목', PAD + 98, y + 9, `700 15px ${FONT}`, '#111111');
   y += cHdrH;
 
-  clauses.forEach((c, idx) => {
-    const on = checkedClauses.includes(c.id);
+  clauseRows.forEach((row, idx) => {
     if (idx > 0) {
       ctx.beginPath();
       ctx.moveTo(PAD, y);
       ctx.lineTo(W - PAD, y);
       ctx.stroke();
     }
-    // 단순 사각 체크박스
     const bx = PAD + 33;
-    const by = y + 8;
+    const by = y + Math.floor((row.h - 18) / 2);
     ctx.strokeStyle = '#111111';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(bx, by, 18, 18);
-    if (on) {
+    if (row.on) {
       ctx.beginPath();
       ctx.moveTo(bx + 3, by + 9);
       ctx.lineTo(bx + 8, by + 14);
@@ -344,9 +365,11 @@ export async function renderBankReportPng(p: Property, baseRate: number, opts: B
       ctx.stroke();
     }
     ctx.lineWidth = 1;
-    const line = wrapLines(ctx, c.text, CW - 112, `400 16px ${FONT}`, 1)[0];
-    drawText(ctx, line, PAD + 98, y + 8, `400 16px ${FONT}`, '#111111');
-    y += cRowH;
+    const textTop = y + (row.lines.length > 1 ? 7 : 9);
+    row.lines.forEach((line, li) => {
+      drawText(ctx, line, PAD + 98, textTop + li * 21, clauseFont, '#111111');
+    });
+    y += row.h;
   });
   drawOuterBox(ctx, PAD, t5Start, CW, y - t5Start);
 
