@@ -18,4 +18,7 @@ npm install
 npm run dev      # 로컬 개발 서버
 npm run build    # 프로덕션 빌드 (dist/)
 ```
+- **중개사무소 검색(카카오맵 JS SDK):** 빌드 환경변수 `VITE_KAKAO_JS_KEY`에 카카오 JavaScript 키를 설정하세요.
+  - 로컬: `.env.local` 파일에 `VITE_KAKAO_JS_KEY=발급받은_키`
+  - Cloudflare: Workers & Pages → Settings → Build → Build variables and secrets에 `VITE_KAKAO_JS_KEY` 추가
 - Cloudflare Workers 정적 에셋 배포 (`wrangler.jsonc`)

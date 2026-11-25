@@ -10,6 +10,7 @@ import { Card, DealBadge, ItemField, ScoreBadge, Segment, TextField, TopBar } fr
 import { LocationBox } from '../components/LocationBox';
 import { PhotoBox } from '../components/PhotoBox';
 import { ScoreCard } from '../components/ScoreCard';
+import { AgencySearch } from '../components/AgencySearch';
 import { Icon, type IconName } from '../components/Icon';
 import { DEAL_LABEL, STATUS_LABEL, type DealType, type Property, type Status } from '../types';
 
@@ -86,6 +87,7 @@ function BasicTab({ p }: { p: Property }) {
           <Icon name="apartment" size={19} className="text-blue-600" />
           <span>중개소 · 일정</span>
         </h3>
+        <AgencySearch p={p} />
         <AgencySuggestions p={p} />
         <Field label="중개사무소">
           <TextField value={p.agencyName} placeholder="○○공인중개사" onChange={(v) => updateProperty(p.id, { agencyName: v })} />
