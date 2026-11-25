@@ -112,11 +112,12 @@ export function TextField({ value, onChange, placeholder, multiline, type = 'tex
   );
 }
 
-export function ItemField({ item, value, onChange }: { item: Item; value: AnswerValue; onChange: (v: AnswerValue) => void }) {
+export function ItemField({ item, value, onChange, action }: { item: Item; value: AnswerValue; onChange: (v: AnswerValue) => void; action?: ReactNode }) {
   return (
     <div className="py-3 border-b border-slate-100 last:border-0">
-      <div className="mb-2 flex items-baseline justify-between gap-2">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <span className="font-semibold text-slate-800">{item.label}</span>
+        {action}
       </div>
       {item.tip && (
         <p className="mb-2 text-xs text-slate-500 flex items-center gap-1">

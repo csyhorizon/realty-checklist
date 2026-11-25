@@ -12,6 +12,7 @@ import { PhotoBox } from '../components/PhotoBox';
 import { ScoreCard } from '../components/ScoreCard';
 import { AgencySearch } from '../components/AgencySearch';
 import { Icon, type IconName } from '../components/Icon';
+import { naverLandUrl } from '../lib/geo';
 import { DEAL_LABEL, STATUS_LABEL, type DealType, type Property, type Status } from '../types';
 
 type Tab = 'basic' | SectionId | 'contract' | 'photos' | 'summary';
@@ -119,10 +120,27 @@ function BasicTab({ p }: { p: Property }) {
 
 function SectionTab({ p, section }: { p: Property; section: SectionId }) {
   const items = itemsFor(p.dealType, section).filter((i) => !i.showIf || i.showIf(p.answers));
+  const marketAction = (
+    <a
+      href={naverLandUrl(p.location)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 px-2.5 h-8 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold active:bg-emerald-100 shrink-0"
+    >
+      <Icon name={p.location ? 'location_on' : 'trending_up'} size={14} filled={!!p.location} />
+      <span>네이버 부동산</span>
+    </a>
+  );
   return (
     <Card>
       {items.map((item) => (
-        <ItemField key={item.id} item={item} value={p.answers[item.id]} onChange={(v) => setAnswer(p, item.id, v)} />
+        <ItemField
+          key={item.id}
+          item={item}
+          value={p.answers[item.id]}
+          onChange={(v) => setAnswer(p, item.id, v)}
+          action={item.id === 'marketPrice' ? marketAction : undefined}
+        />
       ))}
       <div className="pt-3">
         <p className="font-semibold text-slate-800 mb-2 flex items-center gap-1.5">

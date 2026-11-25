@@ -75,7 +75,7 @@ export const ITEMS: Item[] = [
   },
   {
     id: 'marketPrice', section: 'safety', label: '매매 시세', type: 'number', unit: '만원',
-    tip: 'KB시세·국토부 실거래가 참고. 입력하면 전세가율/부채비율 자동 계산',
+    tip: '네이버 부동산·실거래가 참고 (현위치 저장 시 해당 위치로 바로 열림). 입력하면 전세가율/부채비율 자동 계산',
   },
   {
     id: 'loan', section: 'safety', label: '버팀목 대출', type: 'single', deals: ['jeonse', 'semi'],

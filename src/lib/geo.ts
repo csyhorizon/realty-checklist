@@ -68,6 +68,14 @@ export const naverAppUrl = (lat: number, lng: number, name: string) =>
 export const naverSearchUrl = (query: string) =>
   `https://map.naver.com/p/search/${encodeURIComponent(query)}`;
 
+/** 네이버 부동산 바로가기 URL (저장된 좌표가 있으면 해당 위치 중심으로 이동) */
+export function naverLandUrl(loc?: { lat: number; lng: number }): string {
+  if (isMobile()) {
+    return loc ? `https://m.land.naver.com/map/${loc.lat}:${loc.lng}:17` : 'https://m.land.naver.com/';
+  }
+  return loc ? `https://new.land.naver.com/complexes?ms=${loc.lat},${loc.lng},17` : 'https://new.land.naver.com/';
+}
+
 /** 모바일: 네이버지도 앱(마커 표시) 실행 → 앱이 없으면 웹 지도로 이동. PC: 웹 지도 새 탭 */
 export function openNaverMap(lat: number, lng: number, name: string) {
   const web = naverWebUrl(lat, lng);
