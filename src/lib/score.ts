@@ -98,28 +98,27 @@ export function scoreProperty(p: Property, baseRate: number): ScoreResult {
     }
   }
 
-  // 전세 안전 지표 (보증금 규모가 큰 전세/반전세에서 반영, 월세는 입력 시에만)
+  // 전세·반전세 안전 지표 (현실적인 HUG 90% 기준 반영)
   let fatal = false;
-  if (metrics.jeonseRatio != null) {
-    buckets.safety.push(ratioScore(metrics.jeonseRatio, [[60, 1], [70, 0.8], [80, 0.4]]));
-    if (metrics.jeonseRatio > 80) {
-      flags.push({ level: 'danger', text: `전세가율 ${metrics.jeonseRatio.toFixed(0)}% (80% 초과, 깡통전세 우려)` });
-      fatal = true;
-    } else if (metrics.jeonseRatio > 70) {
-      flags.push({ level: 'warn', text: `전세가율 ${metrics.jeonseRatio.toFixed(0)}% (70~80% 주의)` });
+  if (p.dealType !== 'monthly') {
+    if (metrics.jeonseRatio != null) {
+      buckets.safety.push(ratioScore(metrics.jeonseRatio, [[70, 1], [80, 0.85], [90, 0.55]]));
+      if (metrics.jeonseRatio > 90) {
+        flags.push({ level: 'danger', text: `전세가율 ${metrics.jeonseRatio.toFixed(0)}% (90% 초과, HUG 보증보험 불가 우려)` });
+        fatal = true;
+      } else if (metrics.jeonseRatio > 80) {
+        flags.push({ level: 'warn', text: `전세가율 ${metrics.jeonseRatio.toFixed(0)}% (80~90%, HUG 한도 이내 유의)` });
+      }
     }
-  }
-  if (metrics.debtRatio != null) {
-    buckets.safety.push(ratioScore(metrics.debtRatio, [[70, 1], [80, 0.4]]));
-    if (metrics.debtRatio > 80) {
-      flags.push({ level: 'danger', text: `부채비율 ${metrics.debtRatio.toFixed(0)}% (80% 초과)` });
-      fatal = true;
-    } else if (metrics.debtRatio > 70) {
-      flags.push({ level: 'warn', text: `부채비율 ${metrics.debtRatio.toFixed(0)}% (70~80% 주의)` });
+    if (metrics.debtRatio != null) {
+      buckets.safety.push(ratioScore(metrics.debtRatio, [[70, 1], [80, 0.85], [90, 0.55]]));
+      if (metrics.debtRatio > 90) {
+        flags.push({ level: 'danger', text: `부채비율 ${metrics.debtRatio.toFixed(0)}% (90% 초과, HUG 보증보험 불가)` });
+        fatal = true;
+      } else if (metrics.debtRatio > 80) {
+        flags.push({ level: 'warn', text: `부채비율 ${metrics.debtRatio.toFixed(0)}% (80~90%, HUG 한도 이내 유의)` });
+      }
     }
-  }
-  if (metrics.hugOk === false && p.dealType !== 'monthly') {
-    flags.push({ level: 'warn', text: 'HUG 보증보험 기준(시세의 90%) 초과 가능성' });
   }
   if (a.violation === 'bad') fatal = true;
 

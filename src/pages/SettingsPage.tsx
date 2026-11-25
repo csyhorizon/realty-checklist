@@ -109,7 +109,8 @@ export default function SettingsPage() {
             <span>기준금리</span>
           </h3>
           <p className="text-sm text-slate-500 mb-3">
-            환산월세 계산에 쓰는 법정 전월세 전환율 = 한국은행 기준금리 + 2%p. 금리가 바뀌면 수정하세요.
+            월세·반전세·전세의 한 달 체감 주거비를 같은 기준으로 비교하기 위해, 주택임대차보호법상{' '}
+            <b>법정 전월세 전환율(한국은행 기준금리 + 2%p)</b>을 적용해 보증금을 월세로 환산합니다.
           </p>
           <NumberField value={settings.baseRate} unit="%" onChange={(v) => v != null && saveSettings({ baseRate: v })} />
           <p className="text-sm mt-2">
@@ -125,9 +126,8 @@ export default function SettingsPage() {
           <ul className="text-sm text-slate-600 space-y-1.5 list-disc pl-5">
             <li>각 항목 선택지에 0~1점 부여 → 섹션 평균 × 100</li>
             <li>종합 = 섹션 점수의 가중 평균 (입력한 섹션만 반영)</li>
-            <li>전세가율 ≤60% 안전 · 70~80% 주의 · 80% 초과 위험</li>
-            <li>부채비율(선순위+보증금)/시세 ≤70% 안전 · 80% 초과 위험</li>
-            <li>위반건축물·전세가율/부채비율 80% 초과 시 최대 40점</li>
+            <li>전세가율·부채비율(전세·반전세): ≤70% 안전 · 70~80% 양호 · 80~90% 유의(HUG 한도 이내) · 90% 초과 위험</li>
+            <li>위반건축물 또는 전세가율·부채비율 90% 초과 시 최대 40점</li>
           </ul>
           <table className="w-full mt-3 text-sm text-center">
             <thead>

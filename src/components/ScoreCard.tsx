@@ -58,11 +58,11 @@ export function ScoreCard({ s, deal, baseRate }: { s: ScoreResult; deal: DealTyp
         </div>
         <div className="rounded-xl bg-slate-50 p-2">
           <p className="text-[11px] text-slate-500">전세가율</p>
-          <p className={`font-bold ${ratioTone(m.jeonseRatio, 70, 80)}`}>{m.jeonseRatio == null ? '–' : `${m.jeonseRatio.toFixed(0)}%`}</p>
+          <p className={`font-bold ${ratioTone(m.jeonseRatio, 80, 90)}`}>{m.jeonseRatio == null ? '–' : `${m.jeonseRatio.toFixed(0)}%`}</p>
         </div>
         <div className="rounded-xl bg-slate-50 p-2">
           <p className="text-[11px] text-slate-500">부채비율</p>
-          <p className={`font-bold ${ratioTone(m.debtRatio, 70, 80)}`}>{m.debtRatio == null ? '–' : `${m.debtRatio.toFixed(0)}%`}</p>
+          <p className={`font-bold ${ratioTone(m.debtRatio, 80, 90)}`}>{m.debtRatio == null ? '–' : `${m.debtRatio.toFixed(0)}%`}</p>
         </div>
       </div>
       <p className="text-[11px] text-slate-400 leading-relaxed">
