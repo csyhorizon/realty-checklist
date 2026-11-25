@@ -1,4 +1,5 @@
 import type { AnswerValue, DealType } from '../types';
+import type { IconName } from '../components/Icon';
 
 export type SectionId = 'safety' | 'location' | 'room' | 'bath' | 'options';
 export type Risk = 'warn' | 'danger';
@@ -25,12 +26,12 @@ export interface Item {
   scoreFn?: (v: AnswerValue) => number | null;
 }
 
-export const SECTIONS: { id: SectionId; label: string; icon: string }[] = [
-  { id: 'safety', label: '가격·권리', icon: '🛡️' },
-  { id: 'location', label: '위치·건물', icon: '🏢' },
-  { id: 'room', label: '방·주방', icon: '🛏️' },
-  { id: 'bath', label: '화장실', icon: '🚿' },
-  { id: 'options', label: '옵션', icon: '🧺' },
+export const SECTIONS: { id: SectionId; label: string; icon: IconName }[] = [
+  { id: 'safety', label: '가격·권리', icon: 'shield' },
+  { id: 'location', label: '위치·건물', icon: 'apartment' },
+  { id: 'room', label: '방·주방', icon: 'bed' },
+  { id: 'bath', label: '화장실', icon: 'shower' },
+  { id: 'options', label: '옵션', icon: 'local_laundry_service' },
 ];
 
 /** 거래유형별 섹션 가중치 (합 100) */

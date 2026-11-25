@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { createProperty, recentAgencies } from '../db/db';
 import { TopBar } from '../components/ui';
+import { Icon, type IconName } from '../components/Icon';
 import type { DealType } from '../types';
 
-const DEALS: { v: DealType; title: string; desc: string; icon: string }[] = [
-  { v: 'monthly', title: '월세', desc: '보증금 + 월세 · 생활 편의 중심 점수', icon: '🗓️' },
-  { v: 'jeonse', title: '전세', desc: '보증금만 · 전세가율·권리 등 안전 중심 점수', icon: '🛡️' },
-  { v: 'semi', title: '반전세', desc: '높은 보증금 + 월세 · 안전과 편의 균형', icon: '⚖️' },
+const DEALS: { v: DealType; title: string; desc: string; icon: IconName }[] = [
+  { v: 'monthly', title: '월세', desc: '보증금 + 월세 · 생활 편의 중심 점수', icon: 'calendar_month' },
+  { v: 'jeonse', title: '전세', desc: '보증금만 · 전세가율·권리 등 안전 중심 점수', icon: 'verified_user' },
+  { v: 'semi', title: '반전세', desc: '높은 보증금 + 월세 · 안전과 편의 균형', icon: 'balance' },
 ];
 
 export default function NewPage() {
@@ -45,7 +46,9 @@ export default function NewPage() {
                   deal === d.v ? 'border-blue-600 bg-blue-50' : 'border-slate-200 bg-white'
                 }`}
               >
-                <span className="text-3xl">{d.icon}</span>
+                <span className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${deal === d.v ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'}`}>
+                  <Icon name={d.icon} size={24} />
+                </span>
                 <span className="flex-1">
                   <span className="block text-lg font-bold">{d.title}</span>
                   <span className="block text-sm text-slate-500">{d.desc}</span>
@@ -65,7 +68,7 @@ export default function NewPage() {
             }`}
           >
             <span className={`w-6 h-6 shrink-0 rounded-md border-2 flex items-center justify-center text-white text-sm ${reuse ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
-              {reuse ? '✓' : ''}
+              {reuse && <Icon name="check" size={16} />}
             </span>
             <span className="flex-1 min-w-0">
               <span className="block font-semibold">직전 중개소 그대로 쓰기</span>

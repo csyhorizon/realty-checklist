@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db';
@@ -8,14 +8,17 @@ import { useSettings } from '../lib/hooks';
 import { displayName, formatManwon } from '../lib/format';
 import { BottomNav, DealBadge, ScoreBadge, TopBar } from '../components/ui';
 import { CoverImage } from '../components/PhotoBox';
+import { Icon, type IconName } from '../components/Icon';
 import { openNaverMap } from '../lib/geo';
 import type { AnswerValue, Property } from '../types';
 
 interface Row {
   key: string;
-  label: string;
+  label: ReactNode;
   group: string;
-  cells: string[];
+  groupIcon?: IconName;
+  cells: ReactNode[];
+  rawCells: string[];
   scores: (number | null)[]; // 높을수록 좋음 (하이라이트용)
 }
 
@@ -36,36 +39,92 @@ function itemCellScore(item: Item, v: AnswerValue): number | null {
 function buildRows(list: { p: Property; s: ScoreResult }[], cost: (number | null)[]): Row[] {
   const rows: Row[] = [];
   const pct = (n: number | null) => (n == null ? '–' : `${n.toFixed(0)}%`);
-  rows.push({ key: 'total', group: '점수', label: '종합 점수', cells: list.map(({ s }) => (s.total == null ? '–' : String(Math.round(s.total)))), scores: list.map(({ s }) => s.total) });
-  rows.push({ key: 'cost', group: '점수', label: '비용 점수', cells: cost.map((c) => (c == null ? '–' : String(Math.round(c)))), scores: cost });
-  rows.push({ key: 'rating', group: '점수', label: '내 별점', cells: list.map(({ p }) => (p.rating ? '★'.repeat(p.rating) : '–')), scores: list.map(({ p }) => p.rating ?? null) });
+  const plainRow = (key: string, group: string, label: ReactNode, cells: string[], scores: (number | null)[], groupIcon?: IconName): Row => ({
+    key,
+    group,
+    groupIcon,
+    label,
+    cells,
+    rawCells: cells,
+    scores,
+  });
+
+  rows.push(plainRow('total', '점수', '종합 점수', list.map(({ s }) => (s.total == null ? '–' : String(Math.round(s.total)))), list.map(({ s }) => s.total), 'trophy'));
+  rows.push(plainRow('cost', '점수', '비용 점수', cost.map((c) => (c == null ? '–' : String(Math.round(c)))), cost, 'trophy'));
+  rows.push({
+    key: 'rating',
+    group: '점수',
+    groupIcon: 'trophy',
+    label: '내 별점',
+    cells: list.map(({ p }) =>
+      p.rating ? (
+        <span className="inline-flex items-center justify-center gap-0.5 text-amber-400">
+          {Array.from({ length: p.rating }, (_, idx) => (
+            <Icon key={idx} name="star" size={14} filled />
+          ))}
+        </span>
+      ) : (
+        '–'
+      ),
+    ),
+    rawCells: list.map(({ p }) => String(p.rating ?? '')),
+    scores: list.map(({ p }) => p.rating ?? null),
+  });
   for (const sec of SECTIONS) {
-    rows.push({
-      key: `sec_${sec.id}`,
-      group: '점수',
-      label: `${sec.icon} ${sec.label}`,
-      cells: list.map(({ s }) => (s.sections[sec.id] == null ? '–' : String(Math.round(s.sections[sec.id]!)))),
-      scores: list.map(({ s }) => s.sections[sec.id]),
-    });
+    rows.push(
+      plainRow(
+        `sec_${sec.id}`,
+        '점수',
+        <span className="inline-flex items-center gap-1">
+          <Icon name={sec.icon} size={15} className="text-slate-400" />
+          <span>{sec.label}</span>
+        </span>,
+        list.map(({ s }) => (s.sections[sec.id] == null ? '–' : String(Math.round(s.sections[sec.id]!)))),
+        list.map(({ s }) => s.sections[sec.id]),
+        'trophy',
+      ),
+    );
   }
   rows.push({
     key: 'flags',
     group: '점수',
+    groupIcon: 'trophy',
     label: '위험/주의',
     cells: list.map(({ s }) => {
       const d = s.flags.filter((f) => f.level === 'danger').length;
       const w = s.flags.filter((f) => f.level === 'warn').length;
-      return d + w === 0 ? '없음' : `${d ? `⛔${d} ` : ''}${w ? `⚠️${w}` : ''}`;
+      if (d + w === 0) return '없음';
+      return (
+        <span className="inline-flex items-center justify-center gap-1.5">
+          {d > 0 && (
+            <span className="inline-flex items-center gap-0.5 text-rose-600 font-semibold">
+              <Icon name="dangerous" size={14} />
+              {d}
+            </span>
+          )}
+          {w > 0 && (
+            <span className="inline-flex items-center gap-0.5 text-amber-600 font-semibold">
+              <Icon name="warning" size={14} />
+              {w}
+            </span>
+          )}
+        </span>
+      );
+    }),
+    rawCells: list.map(({ s }) => {
+      const d = s.flags.filter((f) => f.level === 'danger').length;
+      const w = s.flags.filter((f) => f.level === 'warn').length;
+      return `${d},${w}`;
     }),
     scores: list.map(({ s }) => -(s.flags.filter((f) => f.level === 'danger').length * 10 + s.flags.length)),
   });
 
   const em = list.map(({ s }) => s.metrics.monthlyEquiv);
-  rows.push({ key: 'equiv', group: '비용·안전', label: '환산월세', cells: em.map((v) => (v == null ? '–' : `${formatManwon(v)}`)), scores: em.map((v) => (v == null ? null : -v)) });
+  rows.push(plainRow('equiv', '비용·안전', '환산월세', em.map((v) => (v == null ? '–' : `${formatManwon(v)}`)), em.map((v) => (v == null ? null : -v)), 'calculate'));
   const jr = list.map(({ s }) => s.metrics.jeonseRatio);
-  rows.push({ key: 'jr', group: '비용·안전', label: '전세가율', cells: jr.map(pct), scores: jr.map((v) => (v == null ? null : -v)) });
+  rows.push(plainRow('jr', '비용·안전', '전세가율', jr.map(pct), jr.map((v) => (v == null ? null : -v)), 'calculate'));
   const dr = list.map(({ s }) => s.metrics.debtRatio);
-  rows.push({ key: 'dr', group: '비용·안전', label: '부채비율', cells: dr.map(pct), scores: dr.map((v) => (v == null ? null : -v)) });
+  rows.push(plainRow('dr', '비용·안전', '부채비율', dr.map(pct), dr.map((v) => (v == null ? null : -v)), 'calculate'));
 
   const lowerBetter = new Set(['deposit', 'rent', 'fee', 'lienAmount']);
   const higherBetter = new Set(['area']);
@@ -73,19 +132,22 @@ function buildRows(list: { p: Property; s: ScoreResult }[], cost: (number | null
     const ids = new Set(list.flatMap(({ p }) => itemsFor(p.dealType, sec.id).map((i) => i.id)));
     for (const item of ITEMS.filter((i) => ids.has(i.id))) {
       const vals = list.map(({ p }) => p.answers[item.id]);
-      rows.push({
-        key: item.id,
-        group: `${sec.icon} ${sec.label}`,
-        label: item.label,
-        cells: vals.map((v) => answerText(item, v)),
-        scores: vals.map((v) =>
-          typeof v === 'number' && lowerBetter.has(item.id)
-            ? -v
-            : typeof v === 'number' && higherBetter.has(item.id)
-              ? v
-              : itemCellScore(item, v),
+      rows.push(
+        plainRow(
+          item.id,
+          sec.label,
+          item.label,
+          vals.map((v) => answerText(item, v)),
+          vals.map((v) =>
+            typeof v === 'number' && lowerBetter.has(item.id)
+              ? -v
+              : typeof v === 'number' && higherBetter.has(item.id)
+                ? v
+                : itemCellScore(item, v),
+          ),
+          sec.icon,
         ),
-      });
+      );
     }
   }
   return rows;
@@ -155,7 +217,14 @@ export default function ComparePage() {
   if (ids.length < 2) {
     return (
       <div className="pb-40">
-        <TopBar title="⚖️ 비교" />
+        <TopBar
+          title={
+            <span className="flex items-center gap-2">
+              <Icon name="balance" size={22} className="text-blue-600" />
+              <span>비교</span>
+            </span>
+          }
+        />
         <Picker />
         <BottomNav active="compare" />
       </div>
@@ -163,7 +232,7 @@ export default function ComparePage() {
   }
 
   const { list, rows } = data;
-  const shown = diffOnly ? rows.filter((r) => new Set(r.cells).size > 1) : rows;
+  const shown = diffOnly ? rows.filter((r) => new Set(r.rawCells).size > 1) : rows;
   const colW = list.length <= 2 ? 'min-w-[140px]' : 'min-w-[118px]';
   let lastGroup = '';
 
@@ -171,7 +240,12 @@ export default function ComparePage() {
     <div className="pb-24">
       <TopBar
         back
-        title="⚖️ 매물 비교"
+        title={
+          <span className="flex items-center gap-2">
+            <Icon name="balance" size={22} className="text-blue-600" />
+            <span>매물 비교</span>
+          </span>
+        }
         right={
           <label className="flex items-center gap-1.5 text-sm pr-2">
             <input type="checkbox" checked={diffOnly} onChange={(e) => setDiffOnly(e.target.checked)} className="w-5 h-5" />
@@ -195,8 +269,9 @@ export default function ComparePage() {
                     <p className="font-bold text-left truncate mt-1">{displayName(p)}</p>
                   </Link>
                   {p.location && (
-                    <button onClick={() => openNaverMap(p.location!.lat, p.location!.lng, displayName(p))} className="mt-1 w-full text-xs py-1.5 rounded-lg bg-emerald-50 text-emerald-700">
-                      📍 지도
+                    <button onClick={() => openNaverMap(p.location!.lat, p.location!.lng, displayName(p))} className="mt-1 w-full text-xs py-1.5 rounded-lg bg-emerald-50 text-emerald-700 inline-flex items-center justify-center gap-1">
+                      <Icon name="location_on" size={14} filled />
+                      <span>지도</span>
                     </button>
                   )}
                 </th>
@@ -214,7 +289,10 @@ export default function ComparePage() {
                 header && (
                   <tr key={`g_${r.group}`}>
                     <td colSpan={list.length + 1} className="sticky left-0 bg-slate-200/70 px-3 py-1.5 font-bold text-slate-700 text-xs">
-                      {r.group}
+                      <span className="inline-flex items-center gap-1">
+                        {r.groupIcon && <Icon name={r.groupIcon} size={15} className="text-slate-600" />}
+                        <span>{r.group}</span>
+                      </span>
                     </td>
                   </tr>
                 ),

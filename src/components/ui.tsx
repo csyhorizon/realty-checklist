@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import type { Item, Opt } from '../schema/checklist';
 import type { AnswerValue } from '../types';
 import { scoreColor } from '../lib/score';
+import { Icon, type IconName } from './Icon';
 
 export function Segment({ options, value, onChange }: { options: Opt[]; value: AnswerValue; onChange: (v: string | null) => void }) {
   return (
@@ -42,11 +43,11 @@ export function Chips({ options, value, onChange }: { options: Opt[]; value: Ans
             key={o.v}
             type="button"
             onClick={() => onChange(on ? arr.filter((x) => x !== o.v) : [...arr, o.v])}
-            className={`min-h-11 px-4 rounded-full border text-[15px] transition ${
+            className={`min-h-11 px-4 rounded-full border text-[15px] inline-flex items-center gap-1 transition ${
               on ? 'bg-blue-50 border-blue-500 text-blue-700 font-semibold' : 'bg-white border-slate-200 text-slate-700'
             }`}
           >
-            {on ? '✓ ' : ''}
+            {on && <Icon name="check" size={16} />}
             {o.l}
           </button>
         );
@@ -117,7 +118,12 @@ export function ItemField({ item, value, onChange }: { item: Item; value: Answer
       <div className="mb-2 flex items-baseline justify-between gap-2">
         <span className="font-semibold text-slate-800">{item.label}</span>
       </div>
-      {item.tip && <p className="mb-2 text-xs text-slate-500">💡 {item.tip}</p>}
+      {item.tip && (
+        <p className="mb-2 text-xs text-slate-500 flex items-center gap-1">
+          <Icon name="lightbulb" size={15} className="text-amber-500" />
+          <span>{item.tip}</span>
+        </p>
+      )}
       {item.type === 'single' && <Segment options={item.options!} value={value} onChange={onChange} />}
       {item.type === 'multi' && <Chips options={item.options!} value={value} onChange={onChange} />}
       {item.type === 'number' && <NumberField value={value} unit={item.unit} onChange={onChange} />}
@@ -145,8 +151,8 @@ export function TopBar({ title, back, right }: { title: ReactNode; back?: boolea
     <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-slate-100 pt-[env(safe-area-inset-top)]">
       <div className="h-14 px-2 flex items-center gap-1 max-w-xl mx-auto">
         {back ? (
-          <button onClick={() => (history.length > 1 ? nav(-1) : nav('/'))} className="w-11 h-11 flex items-center justify-center text-2xl" aria-label="뒤로">
-            ‹
+          <button onClick={() => (history.length > 1 ? nav(-1) : nav('/'))} className="w-11 h-11 flex items-center justify-center text-slate-700" aria-label="뒤로">
+            <Icon name="chevron_left" size={28} />
           </button>
         ) : (
           <span className="w-2" />
@@ -159,18 +165,18 @@ export function TopBar({ title, back, right }: { title: ReactNode; back?: boolea
 }
 
 export function BottomNav({ active }: { active: 'list' | 'compare' | 'settings' }) {
-  const tab = (key: typeof active, to: string, icon: string, label: string) => (
+  const tab = (key: typeof active, to: string, icon: IconName, label: string) => (
     <Link to={to} className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-xs ${active === key ? 'text-blue-600 font-semibold' : 'text-slate-500'}`}>
-      <span className="text-xl leading-none">{icon}</span>
+      <Icon name={icon} size={24} filled={active === key} />
       {label}
     </Link>
   );
   return (
     <nav className="fixed bottom-0 inset-x-0 z-20 bg-white border-t border-slate-200 pb-[env(safe-area-inset-bottom)]">
       <div className="h-16 flex max-w-xl mx-auto">
-        {tab('list', '/', '🏠', '매물')}
-        {tab('compare', '/compare', '⚖️', '비교')}
-        {tab('settings', '/settings', '⚙️', '설정')}
+        {tab('list', '/', 'home', '매물')}
+        {tab('compare', '/compare', 'balance', '비교')}
+        {tab('settings', '/settings', 'settings', '설정')}
       </div>
     </nav>
   );

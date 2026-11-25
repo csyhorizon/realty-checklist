@@ -4,6 +4,7 @@ import { db, uid, updateProperty } from '../db/db';
 import { processImage } from '../lib/image';
 import { useObjectUrl } from '../lib/hooks';
 import type { Photo, Property } from '../types';
+import { Icon } from './Icon';
 
 function Thumb({ photo, cover, onClick }: { photo: Photo; cover: boolean; onClick: () => void }) {
   const url = useObjectUrl(photo.thumb);
@@ -28,7 +29,9 @@ function Viewer({ photos, index, p, onClose, onIndex }: { photos: Photo[]; index
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
       <div className="flex items-center justify-between p-3 pt-[calc(env(safe-area-inset-top)+12px)] text-white">
-        <button onClick={onClose} className="w-11 h-11 text-2xl">✕</button>
+        <button onClick={onClose} className="w-11 h-11 flex items-center justify-center" aria-label="닫기">
+          <Icon name="close" size={26} />
+        </button>
         <span className="text-sm">{index + 1} / {photos.length}</span>
         <span className="w-11" />
       </div>
@@ -53,8 +56,15 @@ function Viewer({ photos, index, p, onClose, onIndex }: { photos: Photo[]; index
           className="w-full min-h-11 px-3 rounded-xl bg-white/10 text-white placeholder:text-white/50 text-base"
         />
         <div className="flex gap-2">
-          <button onClick={() => updateProperty(p.id, { coverPhotoId: photo.id })} className="flex-1 min-h-11 rounded-xl bg-white/15 text-white">
-            {p.coverPhotoId === photo.id ? '✓ 대표 사진' : '대표로 지정'}
+          <button onClick={() => updateProperty(p.id, { coverPhotoId: photo.id })} className="flex-1 min-h-11 rounded-xl bg-white/15 text-white flex items-center justify-center gap-1.5">
+            {p.coverPhotoId === photo.id ? (
+              <>
+                <Icon name="check" size={18} />
+                <span>대표 사진</span>
+              </>
+            ) : (
+              '대표로 지정'
+            )}
           </button>
           <button
             onClick={async () => {
@@ -105,11 +115,13 @@ export function PhotoBox({ p }: { p: Property }) {
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <button onClick={() => camRef.current?.click()} disabled={busy} className="flex-1 min-h-12 rounded-xl bg-blue-600 text-white font-semibold disabled:opacity-60">
-          📷 촬영
+        <button onClick={() => camRef.current?.click()} disabled={busy} className="flex-1 min-h-12 rounded-xl bg-blue-600 text-white font-semibold disabled:opacity-60 flex items-center justify-center gap-1.5">
+          <Icon name="photo_camera" size={20} />
+          <span>촬영</span>
         </button>
-        <button onClick={() => albumRef.current?.click()} disabled={busy} className="flex-1 min-h-12 rounded-xl border border-slate-200 bg-white font-semibold disabled:opacity-60">
-          🖼️ 앨범
+        <button onClick={() => albumRef.current?.click()} disabled={busy} className="flex-1 min-h-12 rounded-xl border border-slate-200 bg-white font-semibold disabled:opacity-60 flex items-center justify-center gap-1.5">
+          <Icon name="photo_library" size={20} />
+          <span>앨범</span>
         </button>
       </div>
       <input ref={camRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => add(e.target.files)} />
@@ -134,7 +146,7 @@ export function CoverImage({ photoId, className = '' }: { photoId?: string; clas
   const url = useObjectUrl(photo?.thumb);
   return (
     <div className={`bg-slate-100 flex items-center justify-center overflow-hidden ${className}`}>
-      {url ? <img src={url} alt="" className="w-full h-full object-cover" /> : <span className="text-2xl">🏠</span>}
+      {url ? <img src={url} alt="" className="w-full h-full object-cover" /> : <Icon name="home" size={28} className="text-slate-300" />}
     </div>
   );
 }

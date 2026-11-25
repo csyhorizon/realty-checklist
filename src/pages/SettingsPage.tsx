@@ -5,6 +5,7 @@ import { useSettings } from '../lib/hooks';
 import { downloadOrShareBackup, importBackup } from '../lib/backup';
 import { conversionRate } from '../lib/score';
 import { BottomNav, Card, NumberField, TopBar } from '../components/ui';
+import { Icon } from '../components/Icon';
 import { SECTIONS, WEIGHTS } from '../schema/checklist';
 import { DEAL_LABEL, type DealType } from '../types';
 
@@ -48,10 +49,20 @@ export default function SettingsPage() {
 
   return (
     <div className="pb-24">
-      <TopBar title="⚙️ 설정" />
+      <TopBar
+        title={
+          <span className="flex items-center gap-2">
+            <Icon name="settings" size={22} className="text-slate-700" />
+            <span>설정</span>
+          </span>
+        }
+      />
       <div className="max-w-xl mx-auto px-4 pt-4 space-y-4">
         <Card>
-          <h3 className="font-bold mb-1">💾 데이터 백업</h3>
+          <h3 className="font-bold mb-1 flex items-center gap-1.5">
+            <Icon name="cloud_upload" size={20} className="text-blue-600" />
+            <span>데이터 백업</span>
+          </h3>
           <p className="text-sm text-slate-500 mb-3">
             모든 데이터는 이 브라우저에만 저장돼요. 브라우저 데이터를 지우거나 기기를 바꾸면 사라지니 주기적으로 백업하세요.
           </p>
@@ -73,7 +84,10 @@ export default function SettingsPage() {
           </div>
           <div className="mt-3 text-sm">
             {persisted ? (
-              <span className="text-emerald-600">✅ 영구 저장소 사용 중 (브라우저가 자동 삭제하지 않음)</span>
+              <span className="text-emerald-600 inline-flex items-center gap-1">
+                <Icon name="check_circle" size={17} />
+                <span>영구 저장소 사용 중 (브라우저가 자동 삭제하지 않음)</span>
+              </span>
             ) : (
               <button
                 onClick={async () => {
@@ -90,7 +104,10 @@ export default function SettingsPage() {
         </Card>
 
         <Card>
-          <h3 className="font-bold mb-1">📈 기준금리</h3>
+          <h3 className="font-bold mb-1 flex items-center gap-1.5">
+            <Icon name="trending_up" size={20} className="text-blue-600" />
+            <span>기준금리</span>
+          </h3>
           <p className="text-sm text-slate-500 mb-3">
             환산월세 계산에 쓰는 법정 전월세 전환율 = 한국은행 기준금리 + 2%p. 금리가 바뀌면 수정하세요.
           </p>
@@ -101,7 +118,10 @@ export default function SettingsPage() {
         </Card>
 
         <Card>
-          <h3 className="font-bold mb-2">🧮 점수 계산 방식</h3>
+          <h3 className="font-bold mb-2 flex items-center gap-1.5">
+            <Icon name="calculate" size={20} className="text-blue-600" />
+            <span>점수 계산 방식</span>
+          </h3>
           <ul className="text-sm text-slate-600 space-y-1.5 list-disc pl-5">
             <li>각 항목 선택지에 0~1점 부여 → 섹션 평균 × 100</li>
             <li>종합 = 섹션 점수의 가중 평균 (입력한 섹션만 반영)</li>
@@ -122,7 +142,10 @@ export default function SettingsPage() {
               {SECTIONS.map((s) => (
                 <tr key={s.id} className="border-t border-slate-100">
                   <td className="text-left py-1.5">
-                    {s.icon} {s.label}
+                    <span className="inline-flex items-center gap-1.5">
+                      <Icon name={s.icon} size={16} className="text-slate-500" />
+                      <span>{s.label}</span>
+                    </span>
                   </td>
                   {(['monthly', 'jeonse', 'semi'] as DealType[]).map((d) => (
                     <td key={d}>{WEIGHTS[d][s.id]}%</td>
@@ -134,7 +157,10 @@ export default function SettingsPage() {
         </Card>
 
         <Card>
-          <h3 className="font-bold mb-2 text-rose-600">⚠️ 전체 삭제</h3>
+          <h3 className="font-bold mb-2 text-rose-600 flex items-center gap-1.5">
+            <Icon name="warning" size={20} />
+            <span>전체 삭제</span>
+          </h3>
           <button
             onClick={async () => {
               if (!confirm('모든 매물과 사진을 삭제할까요? 되돌릴 수 없습니다.')) return;

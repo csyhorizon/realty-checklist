@@ -4,6 +4,7 @@ import { formatManwon } from '../lib/format';
 import { ScoreBadge } from './ui';
 import { WEIGHTS } from '../schema/checklist';
 import type { DealType } from '../types';
+import { Icon } from './Icon';
 
 const ratioTone = (r: number | null, warn: number, danger: number) =>
   r == null ? 'text-slate-400' : r > danger ? 'text-rose-600' : r > warn ? 'text-amber-600' : 'text-emerald-600';
@@ -19,7 +20,12 @@ export function ScoreCard({ s, deal, baseRate }: { s: ScoreResult; deal: DealTyp
           <p className="text-xs text-slate-500">
             입력 {s.answered}/{s.totalItems}개 · 섹션 가중합 방식
           </p>
-          {s.capped && <p className="text-xs text-rose-600 font-semibold">⛔ 치명 위험으로 40점 상한 적용 (원점수 {Math.round(s.rawTotal!)})</p>}
+          {s.capped && (
+            <p className="text-xs text-rose-600 font-semibold flex items-center gap-1 mt-0.5">
+              <Icon name="dangerous" size={15} />
+              <span>치명 위험으로 40점 상한 적용 (원점수 {Math.round(s.rawTotal!)})</span>
+            </p>
+          )}
         </div>
       </div>
 
@@ -28,8 +34,9 @@ export function ScoreCard({ s, deal, baseRate }: { s: ScoreResult; deal: DealTyp
           const v = s.sections[sec.id];
           return (
             <div key={sec.id} className="flex items-center gap-2 text-sm">
-              <span className="w-24 shrink-0">
-                {sec.icon} {sec.label}
+              <span className="w-24 shrink-0 flex items-center gap-1.5">
+                <Icon name={sec.icon} size={17} className="text-slate-500" />
+                <span>{sec.label}</span>
               </span>
               <div className="flex-1 h-2.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
@@ -68,9 +75,10 @@ export function ScoreCard({ s, deal, baseRate }: { s: ScoreResult; deal: DealTyp
           {s.flags.map((f, i) => (
             <li
               key={i}
-              className={`text-sm px-3 py-2 rounded-lg ${f.level === 'danger' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-800'}`}
+              className={`text-sm px-3 py-2 rounded-lg flex items-start gap-1.5 ${f.level === 'danger' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-800'}`}
             >
-              {f.level === 'danger' ? '⛔' : '⚠️'} {f.text}
+              <Icon name={f.level === 'danger' ? 'dangerous' : 'warning'} size={17} className="mt-0.5" />
+              <span>{f.text}</span>
             </li>
           ))}
         </ul>

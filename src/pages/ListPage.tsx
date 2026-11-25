@@ -7,6 +7,7 @@ import { useSettings } from '../lib/hooks';
 import { displayName, formatDate, priceSummary, formatManwon } from '../lib/format';
 import { BottomNav, DealBadge, ScoreBadge, TopBar } from '../components/ui';
 import { CoverImage } from '../components/PhotoBox';
+import { Icon } from '../components/Icon';
 import { STATUS_LABEL, type DealType, type Status } from '../types';
 
 type Sort = 'recent' | 'score' | 'cost';
@@ -42,7 +43,12 @@ export default function ListPage() {
   return (
     <div className="pb-36">
       <TopBar
-        title="🏠 집보기 체크리스트"
+        title={
+          <span className="flex items-center gap-2">
+            <Icon name="home_work" size={22} className="text-blue-600" />
+            <span>집보기 체크리스트</span>
+          </span>
+        }
         right={
           props && props.length > 1 ? (
             <button
@@ -84,7 +90,7 @@ export default function ListPage() {
 
         {props && props.length === 0 && (
           <div className="text-center py-16 text-slate-500">
-            <p className="text-5xl mb-4">🏘️</p>
+            <Icon name="home_work" size={56} className="text-slate-300 mx-auto mb-3" />
             <p className="font-semibold text-slate-700">아직 등록된 매물이 없어요</p>
             <p className="text-sm mt-1">아래 + 버튼으로 첫 매물을 추가하세요</p>
           </div>
@@ -108,7 +114,7 @@ export default function ListPage() {
                     <div className="flex items-center gap-1.5">
                       <DealBadge deal={p.dealType} />
                       {p.status !== 'reviewing' && <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{STATUS_LABEL[p.status as Status]}</span>}
-                      {p.location && <span className="text-xs">📍</span>}
+                      {p.location && <Icon name="location_on" size={15} filled className="text-emerald-600" />}
                     </div>
                     <p className="font-bold truncate mt-1">{displayName(p)}</p>
                     <p className="text-sm text-slate-600 truncate">{priceSummary(p.dealType, p.answers.deposit, p.answers.rent)}</p>
@@ -117,9 +123,19 @@ export default function ListPage() {
                       {s.metrics.monthlyEquiv != null && ` · 환산 ${formatManwon(s.metrics.monthlyEquiv)}/월`}
                     </p>
                     {(danger || warns > 0) && (
-                      <p className="text-xs mt-1">
-                        {danger && <span className="text-rose-600 font-semibold mr-2">⛔ 계약 비권장</span>}
-                        {warns > 0 && <span className="text-amber-600">⚠️ 주의 {warns}</span>}
+                      <p className="text-xs mt-1 flex items-center gap-2">
+                        {danger && (
+                          <span className="text-rose-600 font-semibold inline-flex items-center gap-0.5">
+                            <Icon name="dangerous" size={14} />
+                            <span>계약 비권장</span>
+                          </span>
+                        )}
+                        {warns > 0 && (
+                          <span className="text-amber-600 inline-flex items-center gap-0.5">
+                            <Icon name="warning" size={14} />
+                            <span>주의 {warns}</span>
+                          </span>
+                        )}
                       </p>
                     )}
                   </div>
@@ -134,10 +150,10 @@ export default function ListPage() {
                           e.stopPropagation();
                           updateProperty(p.id, { favorite: !p.favorite });
                         }}
-                        className="w-9 h-9 text-xl"
+                        className="w-9 h-9 flex items-center justify-center"
                         aria-label="즐겨찾기"
                       >
-                        {p.favorite ? '⭐' : '☆'}
+                        <Icon name="star" size={22} filled={p.favorite} className={p.favorite ? 'text-amber-400' : 'text-slate-300'} />
                       </button>
                     )}
                     <ScoreBadge score={s.total} size="sm" />
@@ -162,10 +178,10 @@ export default function ListPage() {
       ) : (
         <Link
           to="/new"
-          className="fixed z-30 right-5 bottom-[calc(env(safe-area-inset-bottom)+88px)] w-15 h-15 w-[60px] h-[60px] rounded-full bg-blue-600 text-white text-3xl flex items-center justify-center shadow-xl active:scale-95 transition"
+          className="fixed z-30 right-5 bottom-[calc(env(safe-area-inset-bottom)+88px)] w-[60px] h-[60px] rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xl active:scale-95 transition"
           aria-label="새 매물"
         >
-          +
+          <Icon name="add" size={28} />
         </Link>
       )}
       <BottomNav active="list" />

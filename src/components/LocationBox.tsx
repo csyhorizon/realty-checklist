@@ -4,6 +4,7 @@ import { updateProperty } from '../db/db';
 import { displayName } from '../lib/format';
 import type { GeoPoint, Property } from '../types';
 import { TextField } from './ui';
+import { Icon } from './Icon';
 
 export function LocationBox({ p }: { p: Property }) {
   const [busy, setBusy] = useState(false);
@@ -50,7 +51,7 @@ export function LocationBox({ p }: { p: Property }) {
           onClick={() => openNaverMap(p.location!.lat, p.location!.lng, displayName(p))}
           className="w-full flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-left active:bg-emerald-100"
         >
-          <span className="text-2xl">📍</span>
+          <Icon name="location_on" size={26} filled className="text-emerald-600" />
           <span className="flex-1 min-w-0">
             <span className="block font-semibold text-emerald-800">네이버지도에서 보기</span>
             <span className="block text-xs text-emerald-700 truncate">
@@ -58,7 +59,7 @@ export function LocationBox({ p }: { p: Property }) {
               {new Date(p.location.savedAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </span>
           </span>
-          <span className="text-emerald-700">›</span>
+          <Icon name="chevron_right" size={22} className="text-emerald-700" />
         </button>
       ) : (
         <p className="text-sm text-slate-500">현장에서 “현위치 저장”을 누르면 나중에 네이버지도로 바로 열 수 있어요.</p>
@@ -67,9 +68,10 @@ export function LocationBox({ p }: { p: Property }) {
         <button
           onClick={save}
           disabled={busy}
-          className="flex-1 min-h-11 rounded-xl bg-blue-600 text-white font-semibold disabled:opacity-60 active:bg-blue-700"
+          className="flex-1 min-h-11 rounded-xl bg-blue-600 text-white font-semibold disabled:opacity-60 active:bg-blue-700 flex items-center justify-center gap-1.5"
         >
-          {busy ? '위치 확인 중…' : p.location ? '📍 현위치로 다시 저장' : '📍 현위치 저장'}
+          <Icon name="my_location" size={18} />
+          <span>{busy ? '위치 확인 중…' : p.location ? '현위치로 다시 저장' : '현위치 저장'}</span>
         </button>
         {p.location && (
           <button
@@ -84,8 +86,9 @@ export function LocationBox({ p }: { p: Property }) {
         <div className="flex items-center justify-between mb-2">
           <span className="font-semibold text-slate-800">주소</span>
           {p.location && (
-            <button onClick={() => fillAddress(p.location!, true)} disabled={addrBusy} className="text-sm text-blue-600 disabled:opacity-50">
-              {addrBusy ? '주소 찾는 중…' : '↻ 위치로 주소 채우기'}
+            <button onClick={() => fillAddress(p.location!, true)} disabled={addrBusy} className="text-sm text-blue-600 disabled:opacity-50 inline-flex items-center gap-1">
+              <Icon name="refresh" size={16} />
+              <span>{addrBusy ? '주소 찾는 중…' : '위치로 주소 채우기'}</span>
             </button>
           )}
         </div>
@@ -94,7 +97,12 @@ export function LocationBox({ p }: { p: Property }) {
           placeholder={p.location ? '위치 저장 시 자동 입력돼요' : '현위치 저장 시 자동 입력 / 직접 입력'}
           onChange={(v) => updateProperty(p.id, { address: v })}
         />
-        {addrBusy && <p className="text-xs text-slate-500 mt-1">📍 좌표로 주소 찾는 중…</p>}
+        {addrBusy && (
+          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+            <Icon name="my_location" size={14} className="text-blue-500" />
+            <span>좌표로 주소 찾는 중…</span>
+          </p>
+        )}
         {info && <p className="text-xs text-slate-500 mt-1">{info}</p>}
       </div>
       <div className="flex gap-3 text-sm">
