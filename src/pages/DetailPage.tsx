@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, deleteProperty, recentAgencies, setAnswer, updateProperty } from '../db/db';
@@ -12,6 +12,7 @@ import { PhotoBox } from '../components/PhotoBox';
 import { ScoreCard } from '../components/ScoreCard';
 import { AgencySearch } from '../components/AgencySearch';
 import { StationFinder } from '../components/StationFinder';
+import { BankReportModal } from '../components/BankReportModal';
 import { Icon, type IconName } from '../components/Icon';
 import { naverLandUrl } from '../lib/geo';
 import { DEAL_LABEL, STATUS_LABEL, type DealType, type Property, type Status } from '../types';
@@ -211,11 +212,21 @@ function ContractTab({ p }: { p: Property }) {
 function SummaryTab({ p, baseRate }: { p: Property; baseRate: number }) {
   const nav = useNavigate();
   const s = scoreProperty(p, baseRate);
+  const [reportOpen, setReportOpen] = useState(false);
   return (
     <div className="space-y-4">
       <Card>
         <ScoreCard s={s} deal={p.dealType} baseRate={baseRate} />
       </Card>
+      <button
+        type="button"
+        onClick={() => setReportOpen(true)}
+        className="w-full min-h-13 py-3 px-4 rounded-2xl bg-slate-900 text-white font-semibold shadow-sm flex items-center justify-center gap-2 active:bg-slate-800"
+      >
+        <Icon name="account_balance" size={20} />
+        <span>은행 제출용 PNG 출력 (자금비율 설정)</span>
+      </button>
+      {reportOpen && <BankReportModal p={p} baseRate={baseRate} onClose={() => setReportOpen(false)} />}
       <Card>
         <Field label="내 별점">
           <div className="flex gap-1">
