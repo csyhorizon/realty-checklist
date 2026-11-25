@@ -297,33 +297,20 @@ export async function renderBankReportPng(p: Property, baseRate: number, opts: B
   ]);
   drawOuterBox(ctx, PAD, t3Start, CW, y - t3Start);
 
-  // ── 4. 현장 상태 요약 ──
+  // ── 4. 현장 조사 메모 ──
   y += 26;
-  y = drawHeading(ctx, '4. 목적물 현장 상태 확인', y);
-  const t4Start = y;
-  y = drawFormRow(ctx, y, [
-    { label: '채광 / 방음', value: `${optLabel('sunlight', a.sunlight)} / ${optLabel('soundproof', a.soundproof)}` },
-    { label: '환기 / 습도', value: `${optLabel('ventilation', a.ventilation)} / ${optLabel('humidity', a.humidity)}` },
-  ]);
-  y = drawFormRow(ctx, y, [
-    { label: '곰팡이', value: optLabel('mold', a.mold) },
-    { label: '수압 / 온수', value: `${optLabel('pressure', a.pressure)} / ${optLabel('hotwater', a.hotwater)}` },
-  ]);
-  drawOuterBox(ctx, PAD, t4Start, CW, y - t4Start);
-
-  // ── 5. 현장 조사 메모 ──
-  y += 26;
-  y = drawHeading(ctx, '5. 현장 조사 메모 및 특이사항', y);
+  y = drawHeading(ctx, '4. 현장 조사 메모 및 특이사항', y);
 
   const memoParts: string[] = [];
   if (opts.extraMemo.trim()) memoParts.push(`· 추가 메모: ${opts.extraMemo.trim()}`);
   if (p.memo.trim()) memoParts.push(`· 종합 메모: ${p.memo.trim()}`);
-  for (const sec of SECTIONS) {
+  for (const sec of SECTIONS.filter((s) => s.id === 'safety' || s.id === 'location')) {
     const note = (a[`note_${sec.id}`] as string | undefined)?.trim();
     if (note) memoParts.push(`· ${sec.label}: ${note}`);
   }
-  if (score.flags.length > 0) {
-    memoParts.push(`· 주의 확인사항: ${score.flags.map((f) => f.text).join(' / ')}`);
+  const bankFlags = score.flags.filter((f) => !/^(채광|곰팡이|수압|보일러\/온수):/.test(f.text));
+  if (bankFlags.length > 0) {
+    memoParts.push(`· 주의 확인사항: ${bankFlags.map((f) => f.text).join(' / ')}`);
   }
 
   const footerY = H - 64;
