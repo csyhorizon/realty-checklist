@@ -1,4 +1,4 @@
-import { ITEM_MAP, SECTIONS, clausesFor } from '../schema/checklist';
+import { ITEM_MAP, SECTIONS } from '../schema/checklist';
 import { scoreProperty } from './score';
 import { displayName, formatManwon } from './format';
 import { DEAL_LABEL, type AnswerValue, type Property } from '../types';
@@ -294,10 +294,6 @@ export async function renderBankReportPng(p: Property, baseRate: number, opts: B
       value: a.lien === 'yes' ? `있음 (${a.lienAmount != null ? `${formatManwon(a.lienAmount as number)}원` : '금액 미입력'})` : optLabel('lien', a.lien),
       bold: a.lien === 'yes',
     },
-    {
-      label: '보증금 조정',
-      value: a.adjust === 'yes' ? `가능${a.adjustNote ? ` (${a.adjustNote})` : ''}` : optLabel('adjust', a.adjust),
-    },
   ]);
   drawOuterBox(ctx, PAD, t3Start, CW, y - t3Start);
 
@@ -315,67 +311,9 @@ export async function renderBankReportPng(p: Property, baseRate: number, opts: B
   ]);
   drawOuterBox(ctx, PAD, t4Start, CW, y - t4Start);
 
-  // ── 5. 계약 특약 확인사항 ──
+  // ── 5. 현장 조사 메모 ──
   y += 26;
-  y = drawHeading(ctx, '5. 임대차 계약 특약 확인사항', y);
-  const clauses = clausesFor(p.dealType);
-  const checkedClauses = Array.isArray(a.contract) ? (a.contract as string[]) : [];
-  const t5Start = y;
-  const cHdrH = 34;
-  const clauseFont = `400 15.5px ${FONT}`;
-  const clauseRows = clauses.map((c) => {
-    const lines = wrapLines(ctx, c.text, CW - 114, clauseFont, 2);
-    return { on: checkedClauses.includes(c.id), lines, h: lines.length > 1 ? 50 : 34 };
-  });
-  const cBodyH = clauseRows.reduce((sum, r) => sum + r.h, 0);
-
-  ctx.strokeStyle = '#222222';
-  ctx.lineWidth = 1;
-  ctx.fillStyle = '#f2f2f2';
-  ctx.fillRect(PAD, y, CW, cHdrH);
-  ctx.strokeRect(PAD, y, CW, cHdrH + cBodyH);
-  ctx.beginPath();
-  ctx.moveTo(PAD + 84, y);
-  ctx.lineTo(PAD + 84, y + cHdrH + cBodyH);
-  ctx.moveTo(PAD, y + cHdrH);
-  ctx.lineTo(W - PAD, y + cHdrH);
-  ctx.stroke();
-
-  drawText(ctx, '확인', PAD + 42, y + 9, `700 15px ${FONT}`, '#111111', 'center');
-  drawText(ctx, '특약 항목', PAD + 98, y + 9, `700 15px ${FONT}`, '#111111');
-  y += cHdrH;
-
-  clauseRows.forEach((row, idx) => {
-    if (idx > 0) {
-      ctx.beginPath();
-      ctx.moveTo(PAD, y);
-      ctx.lineTo(W - PAD, y);
-      ctx.stroke();
-    }
-    const bx = PAD + 33;
-    const by = y + Math.floor((row.h - 18) / 2);
-    ctx.strokeStyle = '#111111';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(bx, by, 18, 18);
-    if (row.on) {
-      ctx.beginPath();
-      ctx.moveTo(bx + 3, by + 9);
-      ctx.lineTo(bx + 8, by + 14);
-      ctx.lineTo(bx + 15, by + 4);
-      ctx.stroke();
-    }
-    ctx.lineWidth = 1;
-    const textTop = y + (row.lines.length > 1 ? 7 : 9);
-    row.lines.forEach((line, li) => {
-      drawText(ctx, line, PAD + 98, textTop + li * 21, clauseFont, '#111111');
-    });
-    y += row.h;
-  });
-  drawOuterBox(ctx, PAD, t5Start, CW, y - t5Start);
-
-  // ── 6. 현장 조사 메모 ──
-  y += 26;
-  y = drawHeading(ctx, '6. 현장 조사 메모 및 특이사항', y);
+  y = drawHeading(ctx, '5. 현장 조사 메모 및 특이사항', y);
 
   const memoParts: string[] = [];
   if (opts.extraMemo.trim()) memoParts.push(`· 추가 메모: ${opts.extraMemo.trim()}`);
