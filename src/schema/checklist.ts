@@ -120,6 +120,7 @@ export const ITEMS: Item[] = [
       { v: 'f1', l: '1층', s: 0.5 }, { v: 'f15', l: '1.5층', s: 0.4 }, { v: 'etc', l: '기타', s: 0.5 },
     ],
   },
+  { id: 'stationName', section: 'location', label: '가까운 역', type: 'text', placeholder: '예) 역삼역 2호선' },
   {
     id: 'stationMin', section: 'location', label: '역까지 거리', type: 'number', unit: '분',
     scoreFn: (v) => {

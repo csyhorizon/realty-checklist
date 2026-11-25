@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { getCurrentLocation, naverSearchUrl, naverWebUrl, openNaverMap, reverseGeocode } from '../lib/geo';
-import { updateProperty } from '../db/db';
+import { hasKakaoKey, searchNearbyStations } from '../lib/kakao';
+import { db, updateProperty } from '../db/db';
 import { displayName } from '../lib/format';
 import type { GeoPoint, Property } from '../types';
 import { TextField } from './ui';
@@ -37,6 +38,32 @@ export function LocationBox({ p }: { p: Property }) {
       await updateProperty(p.id, { location: loc });
       setBusy(false);
       await fillAddress(loc, true);
+      if (hasKakaoKey()) {
+        try {
+          const latest = await db.properties.get(p.id);
+          if (latest && latest.answers.stationMin == null) {
+            const stations = await searchNearbyStations(loc.lat, loc.lng);
+            const st = stations[0];
+            if (st) {
+              await updateProperty(p.id, {
+                answers: {
+                  ...latest.answers,
+                  stationName: st.name,
+                  stationMin: st.minutes,
+                  stationBy: st.by,
+                },
+              });
+              setInfo((prev) =>
+                [prev, `가까운 역 자동 입력: ${st.name} (${st.by === 'walk' ? '도보' : '버스'} 약 ${st.minutes}분)`]
+                  .filter(Boolean)
+                  .join(' · '),
+              );
+            }
+          }
+        } catch {
+          // 역 자동 계산 실패는 치명적이지 않으므로 조용히 무시
+        }
+      }
     } catch (e) {
       setErr((e as Error).message);
     } finally {

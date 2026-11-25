@@ -6,12 +6,26 @@ export interface AgencyPlace {
   distance?: number;
 }
 
+export interface StationPlace {
+  id: string;
+  name: string;
+  distance: number; // 직선거리 (m)
+  lat: number;
+  lng: number;
+  walkMin: number;
+  busMin: number;
+  by: 'walk' | 'bus';
+  minutes: number;
+}
+
 interface KakaoPlaceRaw {
   id: string;
   place_name: string;
   phone: string;
   road_address_name: string;
   address_name: string;
+  x?: string;
+  y?: string;
   distance?: string;
 }
 
@@ -112,6 +126,52 @@ export async function searchAgencies(query: string, near?: { lat: number; lng: n
   if (ag2.length > 0 || !/부동산|중개/.test(q)) return ag2;
   // 사용자가 이미 '부동산/중개'를 붙여 검색했는데 AG2로 안 잡히는 경우 일반 검색으로 한 번 더 조회
   return runKeyword(kakao, q, baseOpts);
+}
+
+/** 직선거리(m) 기반 역까지 도보/버스 소요 시간 추정 (도보 20분 초과 시 버스 기준) */
+export function estimateStationAccess(distanceMeters: number) {
+  const walkMin = Math.max(1, Math.round((distanceMeters * 1.25) / 67));
+  const busMin = Math.max(5, Math.round((distanceMeters * 1.3) / 300 + 5));
+  const by: 'walk' | 'bus' = walkMin > 20 ? 'bus' : 'walk';
+  return { walkMin, busMin, by, minutes: by === 'walk' ? walkMin : busMin };
+}
+
+/** 좌표 기준 반경 5km 이내 지하철역 거리순 검색 */
+export async function searchNearbyStations(lat: number, lng: number): Promise<StationPlace[]> {
+  const kakao = await loadKakao();
+  return new Promise((resolve, reject) => {
+    const ps = new kakao.maps.services.Places();
+    ps.categorySearch(
+      'SW8',
+      (data, status) => {
+        if (status === kakao.maps.services.Status.OK) {
+          resolve(
+            data.map((d) => {
+              const distance = Number(d.distance || 0);
+              return {
+                id: d.id,
+                name: d.place_name,
+                distance,
+                lat: Number(d.y),
+                lng: Number(d.x),
+                ...estimateStationAccess(distance),
+              };
+            }),
+          );
+        } else if (status === kakao.maps.services.Status.ZERO_RESULT) {
+          resolve([]);
+        } else {
+          reject(new Error('가까운 역 검색 중 오류가 발생했습니다.'));
+        }
+      },
+      {
+        location: new kakao.maps.LatLng(lat, lng),
+        radius: 5000,
+        sort: kakao.maps.services.SortBy.DISTANCE,
+        size: 5,
+      },
+    );
+  });
 }
 
 /** 좌표 기준 반경 1km 이내 중개업소 거리순 검색 */

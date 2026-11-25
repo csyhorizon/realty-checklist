@@ -76,6 +76,18 @@ export function naverLandUrl(loc?: { lat: number; lng: number }): string {
   return loc ? `https://new.land.naver.com/complexes?ms=${loc.lat},${loc.lng},17` : 'https://new.land.naver.com/';
 }
 
+/** 카카오맵 도보/대중교통 길찾기 링크 */
+export function kakaoRouteUrl(
+  from: { lat: number; lng: number; name?: string },
+  to: { lat: number; lng: number; name: string },
+  by: 'walk' | 'bus',
+): string {
+  const mode = by === 'walk' ? 'walk' : 'traffic';
+  const sName = encodeURIComponent(from.name || '매물');
+  const eName = encodeURIComponent(to.name);
+  return `https://map.kakao.com/link/by/${mode}/${sName},${from.lat},${from.lng}/${eName},${to.lat},${to.lng}`;
+}
+
 /** 모바일: 네이버지도 앱(마커 표시) 실행 → 앱이 없으면 웹 지도로 이동. PC: 웹 지도 새 탭 */
 export function openNaverMap(lat: number, lng: number, name: string) {
   const web = naverWebUrl(lat, lng);

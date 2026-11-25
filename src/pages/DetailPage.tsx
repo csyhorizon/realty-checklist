@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, deleteProperty, recentAgencies, setAnswer, updateProperty } from '../db/db';
@@ -11,6 +11,7 @@ import { LocationBox } from '../components/LocationBox';
 import { PhotoBox } from '../components/PhotoBox';
 import { ScoreCard } from '../components/ScoreCard';
 import { AgencySearch } from '../components/AgencySearch';
+import { StationFinder } from '../components/StationFinder';
 import { Icon, type IconName } from '../components/Icon';
 import { naverLandUrl } from '../lib/geo';
 import { DEAL_LABEL, STATUS_LABEL, type DealType, type Property, type Status } from '../types';
@@ -134,13 +135,15 @@ function SectionTab({ p, section }: { p: Property; section: SectionId }) {
   return (
     <Card>
       {items.map((item) => (
-        <ItemField
-          key={item.id}
-          item={item}
-          value={p.answers[item.id]}
-          onChange={(v) => setAnswer(p, item.id, v)}
-          action={item.id === 'marketPrice' ? marketAction : undefined}
-        />
+        <Fragment key={item.id}>
+          {item.id === 'stationName' && <StationFinder p={p} />}
+          <ItemField
+            item={item}
+            value={p.answers[item.id]}
+            onChange={(v) => setAnswer(p, item.id, v)}
+            action={item.id === 'marketPrice' ? marketAction : undefined}
+          />
+        </Fragment>
       ))}
       <div className="pt-3">
         <p className="font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
